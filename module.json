@@ -1,0 +1,37 @@
+{
+  "name": "quickscale",
+  "title": "QuickScale",
+  "description": "desc",
+  "version": "1.0.0",
+  "readme": "",
+  "bugs": "",
+  "changelog": "",
+  "author": "unsoluble",
+  "authors": [
+    {
+      "name": "unsoluble",
+      "discord": "unsoluble#5084"
+    }
+  ],
+  "media": [
+    {
+      "type": "cover",
+      "url": "https://raw.githubusercontent.com/unsoluble/smalltime/main/doc/manifest-cover.webp",
+      "caption": "SmallTime"
+    }
+  ],
+  "scripts": ["scripts/quickscale.js"],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "socket": true,
+  "url": "",
+  "manifest": "",
+  "download": "",
+  "minimumCoreVersion": "0.8.6",
+  "compatibleCoreVersion": "0.8.9"
+}
