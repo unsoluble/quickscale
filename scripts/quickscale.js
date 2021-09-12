@@ -1,5 +1,6 @@
 const QS_Reduce_Key = '-';
 const QS_Enlarge_Key = '=';
+const QS_Animation_Path = 'modules/quickscale/spinburst2.webm';
 
 Hooks.on('ready', () => {
   window.addEventListener('keypress', (e) => {
@@ -13,6 +14,9 @@ Hooks.on('ready', () => {
     }
     if (e.key == '+') {
       updatePrototype();
+    }
+    if (e.key == '_') {
+      randomize();
     }
   });
 });
@@ -29,15 +33,33 @@ async function updateSize(key) {
 async function updatePrototype() {
   const controlledTokens = canvas.tokens.controlled.map((t) => {
     return {
-      actor: t.data.actorId,
+      actorID: t.data.actorId,
       scale: t.data.scale,
     };
   });
 
-  /*const updates = game.actors
-    .filter((actor) => actor.type === 'character')
-    .map((pc) => ({ _id: pc.id, 'data.traits.size': { value: 'med' } }));
-  await Actor.updateDocuments(updates);*/
+  const actorUpdates = controlledTokens.map((entry) => ({
+    _id: entry.actorID,
+    'token.scale': entry.scale,
+  }));
+  Actor.updateDocuments(actorUpdates);
+
+  const tokens = canvas.tokens.placeables.filter((t) => t._controlled);
+  for (let t of tokens) {
+    await createAnimation(t.data._id);
+  }
+}
+
+async function randomize() {
+  const updates = canvas.tokens.controlled.map((t) => ({
+    _id: t.id,
+    scale: Math.round(getRandomArbitrary(0.8, 1.2) * 10) / 10,
+  }));
+  await canvas.scene.updateEmbeddedDocuments('Token', updates);
+}
+
+function getRandomArbitrary(min, max) {
+  return Math.random() * (max - min) + min;
 }
 
 function getNewScale(old, increase) {
@@ -48,4 +70,28 @@ function getNewScale(old, increase) {
     newScale = Math.max(Math.round((old - 0.1) * 10) / 10, 0.3);
   }
   return newScale;
+}
+
+async function createAnimation(tokenID) {
+  const token = canvas.tokens.get(tokenID);
+  const animationTexture = await loadTexture(QS_Animation_Path);
+  const textureSize = canvas.grid.size + canvas.dimensions.size;
+  animationTexture.orig = {
+    height: textureSize,
+    width: textureSize,
+    x: textureSize / 2,
+    y: textureSize / 2,
+  };
+  let sprite = new PIXI.Sprite(animationTexture);
+  sprite.anchor.set(0.5);
+  let animation = token.addChild(sprite);
+  animation.position.x = (canvas.grid.w * token.data.width) / 2;
+  animation.position.y = (canvas.grid.h * token.data.height) / 2;
+  animation.visible = true;
+  const source = getProperty(animation._texture, 'baseTexture.resource.source');
+  source.loop = false;
+  game.video.play(source);
+  setTimeout(() => {
+    token.removeChild(sprite);
+  }, 1200);
 }
