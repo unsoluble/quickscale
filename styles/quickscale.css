@@ -1,15 +1,16 @@
 #quickscale-random-slider {
   height: 6px;
-  cursor: ew-resize;
   box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
   background: #999999;
   border-radius: 3px;
   border: 1px solid #111;
   margin-bottom: 30px;
+  top: -5px;
 }
 
 #quickscale-random-slider .noUi-connect {
   background: #c85019;
+  cursor: ew-resize;
 }
 
 #quickscale-random-slider .noUi-handle {
@@ -24,25 +25,24 @@
   cursor: grab;
 }
 
+#quickscale-random-slider .noUi-tooltip {
+  display: block;
+  position: absolute;
+  border: none;
+  border-radius: 3px;
+  background: url(/ui/denim-dark-090.png) repeat;
+  color: #efefe0;
+  font-size: 0.8em;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.4);
+  padding: 1px 5px 1px 5px;
+  text-align: center;
+  white-space: nowrap;
+  transform: translate(-50%, 200%);
+}
+
 /* Hide markers on slider handles */
 #quickscale-random-slider .noUi-handle::before,
 #quickscale-random-slider .noUi-handle::after {
   display: none;
-}
-
-#quickscale-random-slider .noUi-tooltip {
-  display: block;
-  position: absolute;
-  border: 1px solid #000;
-  border-radius: 5px;
-  background: #ccc;
-  color: #000;
-  padding: 3px;
-  text-align: center;
-  white-space: nowrap;
-  transform: translate(50%, 200%);
-}
-
-#quickscale-random-slider .noUi-active {
-  box-shadow: none;
 }

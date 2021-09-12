@@ -7,10 +7,6 @@ const QS_Prototype_Key = '+';
 // Animation provided by @Jinker — https://www.patreon.com/jinker
 const QS_Animation_Path = 'modules/quickscale/assets/spinburst2.webm';
 
-// Make a setting for these, probably.
-const QS_Random_Floor = 0.8;
-const QS_Random_Ceiling = 1.2;
-
 Hooks.on('init', function () {
   game.settings.register('quickscale', 'random-min', {
     name: 'Random Min',
@@ -36,38 +32,33 @@ Hooks.on('init', function () {
     default: true,
   });
 
-  /*
-  
   game.settings.register('quickscale', 'enlarge-key', {
     scope: 'world',
     config: false,
     type: String,
     default: '=',
   });
-  
+
   if (game.modules.get('lib-df-hotkeys')?.active) {
-    hotkeys.registerGroup({
-      name: 'quickscale.my-group',
-      label: 'My Awesome Group',
-      description: 'Optional description goes here',
+    Hotkeys.registerGroup({
+      name: 'quickscale.qs-group',
+      label: 'QuickScale',
     });
 
-    hotkeys.registerShortcut({
+    Hotkeys.registerShortcut({
       name: 'quickscale.enlarge-key',
-      label: 'My Hotkey',
-      group: 'quickscale.my-group',
+      label: 'Enlarge',
+      group: 'quickscale.qs-group',
       get: () => game.settings.get('quickscale', 'enlarge-key'),
       set: async (value) => await game.settings.set('quickscale', 'enlarge-key', value),
       default: () => {
-        return { key: hotkeys.keys.KeyQ, alt: false, ctrl: false, shift: false };
+        return { key: '=', alt: false, ctrl: false, shift: false };
       },
       onKeyDown: (self) => {
         console.log('You hit my custom hotkey!');
       },
     });
   }
-  
-  */
 });
 
 Hooks.on('ready', () => {
@@ -93,12 +84,13 @@ Hooks.on('ready', () => {
 });
 
 Hooks.on('renderSettingsConfig', () => {
+  // Hide the inputs that will hold the values but shouldn't be visible.
   $('input[name="quickscale.random-min"]').parent().parent().css('display', 'none');
   $('input[name="quickscale.random-max"]').parent().parent().css('display', 'none');
   $('input[name="quickscale.random-label"]').css('display', 'none');
 
+  // Find the right element to insert after, and insert.
   const insertionElement = $('input[name="quickscale.random-label"]').parent().next();
-
   const injection = `<div id="quickscale-random-slider"></div>`;
 
   // Only inject if it isn't already there.
@@ -106,13 +98,18 @@ Hooks.on('renderSettingsConfig', () => {
     insertionElement.after(injection);
   }
 
+  // Create a custom two-handled slider.
   const slider = document.getElementById('quickscale-random-slider');
 
   noUiSlider.create(slider, {
-    start: [0.7, 1.2],
+    start: [
+      game.settings.get('quickscale', 'random-min'),
+      game.settings.get('quickscale', 'random-max'),
+    ],
     tooltips: [wNumb({ decimals: 1 }), wNumb({ decimals: 1 })],
+    behaviour: 'drag-all',
     step: 0.1,
-    margin: 0.1,
+    margin: 0.2,
     padding: 0.1,
     connect: true,
     range: {
@@ -121,9 +118,26 @@ Hooks.on('renderSettingsConfig', () => {
     },
   });
 
-  mergeTooltips(slider, 5, ' - ');
+  // Tweak to accommodate TidyUI's smaller available space.
+  if (game.modules.get('tidy-ui_game-settings')?.active) {
+    $('.noUi-base').css({
+      width: '480px',
+    });
+    $('#quickscale-random-slider').css({
+      transform: 'translate(30px, 5px)',
+    });
+  }
+
+  slider.noUiSlider.on('change', saveNewRange);
 });
 
+// On slider changes, save the new values into the actual inputs.
+function saveNewRange(values, handle, unencoded, tap, positions, noUiSlider) {
+  $('input[name="quickscale.random-min"]').val(values[0]);
+  $('input[name="quickscale.random-max"]').val(values[1]);
+}
+
+// Main scaling function.
 async function updateSize(key) {
   let increase = false;
   if (key == QS_Enlarge_Key) increase = true;
@@ -133,8 +147,8 @@ async function updateSize(key) {
   );
 }
 
+// Push current scales to prototypes.
 async function updatePrototype() {
-  // Map the controlled tokens.
   const controlledTokens = canvas.tokens.controlled.map((t) => {
     return {
       actorID: t.data.actorId,
@@ -156,10 +170,17 @@ async function updatePrototype() {
   }
 }
 
+// Scale randomizer. Pulls from range set in module settings.
 async function randomize() {
   const updates = canvas.tokens.controlled.map((t) => ({
     _id: t.id,
-    scale: Math.round(getRandomArbitrary(QS_Random_Floor, QS_Random_Ceiling) * 10) / 10,
+    scale:
+      Math.round(
+        getRandomArbitrary(
+          game.settings.get('quickscale', 'random-min'),
+          game.settings.get('quickscale', 'random-max')
+        ) * 10
+      ) / 10, // Extra math here is for decimal truncation.
   }));
   await canvas.scene.updateEmbeddedDocuments('Token', updates);
 }
@@ -203,77 +224,4 @@ async function createAnimation(tokenID) {
   setTimeout(() => {
     token.removeChild(sprite);
   }, 1200);
-}
-
-function mergeTooltips(slider, threshold, separator) {
-  var textIsRtl = getComputedStyle(slider).direction === 'rtl';
-  var isRtl = slider.noUiSlider.options.direction === 'rtl';
-  var isVertical = slider.noUiSlider.options.orientation === 'vertical';
-  var tooltips = slider.noUiSlider.getTooltips();
-  var origins = slider.noUiSlider.getOrigins();
-
-  // Move tooltips into the origin element. The default stylesheet handles this.
-  tooltips.forEach(function (tooltip, index) {
-    if (tooltip) {
-      origins[index].appendChild(tooltip);
-    }
-  });
-
-  slider.noUiSlider.on('update', function (values, handle, unencoded, tap, positions) {
-    var pools = [[]];
-    var poolPositions = [[]];
-    var poolValues = [[]];
-    var atPool = 0;
-
-    // Assign the first tooltip to the first pool, if the tooltip is configured
-    if (tooltips[0]) {
-      pools[0][0] = 0;
-      poolPositions[0][0] = positions[0];
-      poolValues[0][0] = values[0];
-    }
-
-    for (var i = 1; i < positions.length; i++) {
-      if (!tooltips[i] || positions[i] - positions[i - 1] > threshold) {
-        atPool++;
-        pools[atPool] = [];
-        poolValues[atPool] = [];
-        poolPositions[atPool] = [];
-      }
-
-      if (tooltips[i]) {
-        pools[atPool].push(i);
-        poolValues[atPool].push(values[i]);
-        poolPositions[atPool].push(positions[i]);
-      }
-    }
-
-    pools.forEach(function (pool, poolIndex) {
-      var handlesInPool = pool.length;
-
-      for (var j = 0; j < handlesInPool; j++) {
-        var handleNumber = pool[j];
-
-        if (j === handlesInPool - 1) {
-          var offset = 0;
-
-          poolPositions[poolIndex].forEach(function (value) {
-            offset += 1000 - 10 * value;
-          });
-
-          var direction = isVertical ? 'bottom' : 'right';
-          var last = isRtl ? 0 : handlesInPool - 1;
-          var lastOffset = 1000 - 10 * poolPositions[poolIndex][last];
-          offset = (textIsRtl && !isVertical ? 100 : 0) + offset / handlesInPool - lastOffset;
-
-          // Center this tooltip over the affected handles
-          tooltips[handleNumber].innerHTML = poolValues[poolIndex].join(separator);
-          tooltips[handleNumber].style.display = 'block';
-          tooltips[handleNumber].style[direction] = offset + '%';
-        } else {
-          // Hide this tooltip
-          tooltips[handleNumber].style.display = 'none';
-        }
-      }
-    });
-  });
 }
