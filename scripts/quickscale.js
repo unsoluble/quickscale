@@ -13,10 +13,12 @@ const QS_Random_Ceiling = 1.2;
 
 Hooks.on('ready', () => {
   window.addEventListener('keypress', (e) => {
+    // Don't trigger if we're in a text entry field.
     if (document.activeElement instanceof HTMLInputElement) return;
     if (document.activeElement instanceof HTMLTextAreaElement) return;
     if (document.activeElement.getAttribute('contenteditable') === 'true') return;
 
+    // This is all GM-only for now.
     if (!game.user.isGM) return;
 
     if (e.key == QS_Reduce_Key || e.key == QS_Enlarge_Key) {
