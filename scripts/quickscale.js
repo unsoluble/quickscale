@@ -1,6 +1,8 @@
 const QS_Reduce_Key = '-';
 const QS_Enlarge_Key = '=';
-const QS_Animation_Path = 'modules/quickscale/spinburst2.webm';
+const QS_Animation_Path = 'modules/quickscale/assets/spinburst2.webm';
+const QS_Random_Floor = 0.8;
+const QS_Random_Ceiling = 1.2;
 
 Hooks.on('ready', () => {
   window.addEventListener('keypress', (e) => {
@@ -53,7 +55,7 @@ async function updatePrototype() {
 async function randomize() {
   const updates = canvas.tokens.controlled.map((t) => ({
     _id: t.id,
-    scale: Math.round(getRandomArbitrary(0.8, 1.2) * 10) / 10,
+    scale: Math.round(getRandomArbitrary(QS_Random_Floor, QS_Random_Ceiling) * 10) / 10,
   }));
   await canvas.scene.updateEmbeddedDocuments('Token', updates);
 }
