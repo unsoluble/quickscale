@@ -1,6 +1,13 @@
+// Keybinds.
 const QS_Reduce_Key = '-';
 const QS_Enlarge_Key = '=';
+const QS_Randomize_Key = '_';
+const QS_Prototype_Key = '+';
+
+// Animation provided by @Jinker — https://www.patreon.com/jinker
 const QS_Animation_Path = 'modules/quickscale/assets/spinburst2.webm';
+
+// Make a setting for these, probably.
 const QS_Random_Floor = 0.8;
 const QS_Random_Ceiling = 1.2;
 
@@ -9,15 +16,16 @@ Hooks.on('ready', () => {
     if (document.activeElement instanceof HTMLInputElement) return;
     if (document.activeElement instanceof HTMLTextAreaElement) return;
     if (document.activeElement.getAttribute('contenteditable') === 'true') return;
+
     if (!game.user.isGM) return;
 
     if (e.key == QS_Reduce_Key || e.key == QS_Enlarge_Key) {
       updateSize(e.key);
     }
-    if (e.key == '+') {
+    if (e.key == QS_Prototype_Key) {
       updatePrototype();
     }
-    if (e.key == '_') {
+    if (e.key == QS_Randomize_Key) {
       randomize();
     }
   });
@@ -33,6 +41,7 @@ async function updateSize(key) {
 }
 
 async function updatePrototype() {
+  // Map the controlled tokens.
   const controlledTokens = canvas.tokens.controlled.map((t) => {
     return {
       actorID: t.data.actorId,
@@ -40,12 +49,14 @@ async function updatePrototype() {
     };
   });
 
+  // Update the base actor data with the instanced tokens' current scales.
   const actorUpdates = controlledTokens.map((entry) => ({
     _id: entry.actorID,
     'token.scale': entry.scale,
   }));
   Actor.updateDocuments(actorUpdates);
 
+  // Fire off an animation for visual feedback.
   const tokens = canvas.tokens.placeables.filter((t) => t._controlled);
   for (let t of tokens) {
     await createAnimation(t.data._id);
@@ -65,6 +76,7 @@ function getRandomArbitrary(min, max) {
 }
 
 function getNewScale(old, increase) {
+  // Get values for the increment/decrement processes.
   let newScale = old;
   if (increase) {
     newScale = Math.min(Math.round((old + 0.1) * 10) / 10, 10);
@@ -74,6 +86,8 @@ function getNewScale(old, increase) {
   return newScale;
 }
 
+// This whole bit was cribbed from Kandashi's Next Up module:
+// https://github.com/kandashi/Next-Up
 async function createAnimation(tokenID) {
   const token = canvas.tokens.get(tokenID);
   const animationTexture = await loadTexture(QS_Animation_Path);
