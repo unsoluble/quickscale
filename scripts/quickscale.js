@@ -27,8 +27,17 @@ async function updateSize(key) {
 }
 
 async function updatePrototype() {
-  const ids = canvas.tokens.controlled.map((i) => i.id);
-  await game.actors.updateAll({ 'token.scale': 2.0 }, (a) => ids.includes(a.id));
+  const controlledTokens = canvas.tokens.controlled.map((t) => {
+    return {
+      actor: t.data.actorId,
+      scale: t.data.scale,
+    };
+  });
+
+  /*const updates = game.actors
+    .filter((actor) => actor.type === 'character')
+    .map((pc) => ({ _id: pc.id, 'data.traits.size': { value: 'med' } }));
+  await Actor.updateDocuments(updates);*/
 }
 
 function getNewScale(old, increase) {
