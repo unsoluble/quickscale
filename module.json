@@ -13,14 +13,8 @@
       "discord": "unsoluble#5084"
     }
   ],
-  "media": [
-    {
-      "type": "cover",
-      "url": "https://raw.githubusercontent.com/unsoluble/smalltime/main/doc/manifest-cover.webp",
-      "caption": "SmallTime"
-    }
-  ],
-  "scripts": ["scripts/quickscale.js"],
+  "scripts": ["scripts/quickscale.js", "scripts/nouislider.js", "scripts/wNumb.min.js"],
+  "styles": ["styles/quickscale.css", "styles/nouislider.css"],
   "languages": [
     {
       "lang": "en",
@@ -28,7 +22,6 @@
       "path": "lang/en.json"
     }
   ],
-  "socket": true,
   "url": "",
   "manifest": "",
   "download": "",
