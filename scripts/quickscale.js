@@ -79,13 +79,34 @@ Hooks.on('ready', () => {
     if (!game.user.isGM) return;
 
     if (e.key == QS_Reduce_Key || e.key == QS_Enlarge_Key) {
-      updateSize(e.key);
-    }
-    if (e.key == QS_Prototype_Key) {
-      updatePrototype();
+      updateSize(e.key, false);
     }
     if (e.key == QS_Randomize_Key) {
-      randomize();
+      switch (game.canvas.activeLayer.name) {
+        case 'TokenLayer':
+        case 'BackgroundLayer':
+          randomize();
+          break;
+        case 'TemplateLayer':
+        case 'LightingLayer':
+        case 'SoundsLayer':
+          updateSize(e.key, true);
+          break;
+      }
+    }
+    if (e.key == QS_Prototype_Key) {
+      switch (game.canvas.activeLayer.name) {
+        case 'TokenLayer':
+          updatePrototype();
+          break;
+        case 'BackgroundLayer':
+          break;
+        case 'TemplateLayer':
+        case 'LightingLayer':
+        case 'SoundsLayer':
+          updateSize(e.key, true);
+          break;
+      }
     }
   });
 });
@@ -145,9 +166,9 @@ function saveNewRange(values, handle, unencoded, tap, positions, noUiSlider) {
 }
 
 // Main scaling function.
-async function updateSize(key) {
+async function updateSize(key, largeStep) {
   let increase = false;
-  if (key == QS_Enlarge_Key) increase = true;
+  if (key == QS_Enlarge_Key || key == QS_Prototype_Key) increase = true;
 
   // Update controlled tokens.
   await canvas.tokens.updateAll(
@@ -166,18 +187,34 @@ async function updateSize(key) {
   // Update hovered template.
   const hoveredTemplate = canvas.templates._hover?.document;
   if (hoveredTemplate) {
-    await hoveredTemplate.update({
-      distance: hoveredTemplate.data.distance * (increase ? QS_Scale_Up : QS_Scale_Down),
-    });
+    const currentDistance = hoveredTemplate.data.distance;
+    if (largeStep) {
+      await hoveredTemplate.update({
+        distance: increase ? Math.floor(currentDistance + 5) : Math.ceil(currentDistance - 5),
+      });
+    } else {
+      await hoveredTemplate.update({
+        distance: increase ? Math.floor(currentDistance + 1) : Math.ceil(currentDistance - 1),
+      });
+    }
   }
 
   // Update hovered light.
   const hoveredLight = canvas.lighting._hover?.document;
   if (hoveredLight) {
-    await hoveredLight.update({
-      dim: hoveredLight.data.dim * (increase ? QS_Scale_Up : QS_Scale_Down),
-      bright: hoveredLight.data.bright * (increase ? QS_Scale_Up : QS_Scale_Down),
-    });
+    const currentDim = hoveredLight.data.dim;
+    const currentBright = hoveredLight.data.bright;
+    if (largeStep) {
+      await hoveredLight.update({
+        dim: increase ? Math.floor(currentDim + 5) : Math.ceil(currentDim - 5),
+        bright: increase ? Math.floor(currentBright + 5) : Math.ceil(currentBright - 5),
+      });
+    } else {
+      await hoveredLight.update({
+        dim: increase ? Math.floor(currentDim + 1) : Math.ceil(currentDim - 1),
+        bright: increase ? Math.floor(currentBright + 1) : Math.ceil(currentBright - 1),
+      });
+    }
   }
 
   // Update hovered sound.
