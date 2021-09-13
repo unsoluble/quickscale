@@ -1,7 +1,10 @@
 // Keybinds.
 const QS_Reduce_Key = '[';
 const QS_Enlarge_Key = ']';
-const QS_Randomize_Key = '{';
+const QS_Large_Reduce_Key = '{';
+const QS_Large_Enlarge_Key = '}';
+const QS_Random_Scale_Key = '{';
+const QS_Random_Rotate_Key = '}';
 const QS_Prototype_Key = '}';
 
 const QS_Scale_Up = 1.05;
@@ -43,6 +46,15 @@ Hooks.on('init', function () {
     default: true,
   });
 
+  game.settings.register('quickscale', 'rotation-amount', {
+    name: game.i18n.localize('QSCALE.Rotation_Amount'),
+    hint: game.i18n.localize('QSCALE.Rotation_Amount_Hint'),
+    scope: 'world',
+    config: true,
+    type: Number,
+    default: 15,
+  });
+
   // Future optional DF Hotkeys integration, not yet functional.
   /*
   if (game.modules.get('lib-df-hotkeys')?.active) {
@@ -81,11 +93,11 @@ Hooks.on('ready', () => {
     if (e.key == QS_Reduce_Key || e.key == QS_Enlarge_Key) {
       updateSize(e.key, false);
     }
-    if (e.key == QS_Randomize_Key) {
+    if (e.key == QS_Random_Scale_Key) {
       switch (game.canvas.activeLayer.name) {
         case 'TokenLayer':
         case 'BackgroundLayer':
-          randomize();
+          randomizeScale();
           break;
         case 'TemplateLayer':
         case 'LightingLayer':
@@ -100,6 +112,7 @@ Hooks.on('ready', () => {
           updatePrototype();
           break;
         case 'BackgroundLayer':
+          randomizeRotation();
           break;
         case 'TemplateLayer':
         case 'LightingLayer':
@@ -204,15 +217,23 @@ async function updateSize(key, largeStep) {
   if (hoveredLight) {
     const currentDim = hoveredLight.data.dim;
     const currentBright = hoveredLight.data.bright;
+    let newBright = Math.ceil(currentBright - 5);
     if (largeStep) {
+      if (Math.ceil(currentDim - 5) > 0 && newBright < 0) {
+        newBright = 0;
+      }
       await hoveredLight.update({
         dim: increase ? Math.floor(currentDim + 5) : Math.ceil(currentDim - 5),
-        bright: increase ? Math.floor(currentBright + 5) : Math.ceil(currentBright - 5),
+        bright: increase ? Math.floor(currentBright + 5) : newBright,
       });
     } else {
+      newBright = Math.ceil(currentBright - 1);
+      if (Math.ceil(currentDim - 1) > 0 && newBright < 0) {
+        newBright = 0;
+      }
       await hoveredLight.update({
         dim: increase ? Math.floor(currentDim + 1) : Math.ceil(currentDim - 1),
-        bright: increase ? Math.floor(currentBright + 1) : Math.ceil(currentBright - 1),
+        bright: increase ? Math.floor(currentBright + 1) : newBright,
       });
     }
   }
@@ -220,9 +241,20 @@ async function updateSize(key, largeStep) {
   // Update hovered sound.
   const hoveredSound = canvas.sounds._hover?.document;
   if (hoveredSound) {
-    await hoveredSound.update({
-      radius: hoveredSound.data.radius * (increase ? QS_Scale_Up : QS_Scale_Down),
-    });
+    const currentRadius = hoveredSound.data.radius;
+    if (largeStep) {
+      await hoveredSound.update({
+        radius: increase
+          ? Math.floor(currentRadius + 5)
+          : Math.max(Math.ceil(currentRadius - 5), 0),
+      });
+    } else {
+      await hoveredSound.update({
+        radius: increase
+          ? Math.floor(currentRadius + 1)
+          : Math.max(Math.ceil(currentRadius - 1), 0),
+      });
+    }
   }
 }
 
@@ -250,7 +282,7 @@ async function updatePrototype() {
 }
 
 // Scale randomizer. Pulls from range set in module settings.
-async function randomize() {
+async function randomizeScale() {
   // Randomize token scales.
   const tokenUpdates = canvas.tokens.controlled.map((t) => ({
     _id: t.id,
@@ -271,6 +303,18 @@ async function randomize() {
       _id: t.id,
       width: t.data.width * randomTileScale,
       height: t.data.height * randomTileScale,
+    };
+  });
+  await canvas.scene.updateEmbeddedDocuments('Tile', tileUpdates);
+}
+
+// Rotation randomizer for tiles.
+async function randomizeRotation() {
+  const rotation = game.settings.get('quickscale', 'rotation-amount');
+  const tileUpdates = canvas.background.controlled.map((t) => {
+    return {
+      _id: t.id,
+      rotation: t.data.rotation + getRandomArbitrary(0 - rotation, rotation),
     };
   });
   await canvas.scene.updateEmbeddedDocuments('Tile', tileUpdates);
