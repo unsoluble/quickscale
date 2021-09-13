@@ -1,8 +1,11 @@
 // Keybinds.
-const QS_Reduce_Key = '-';
-const QS_Enlarge_Key = '=';
-const QS_Randomize_Key = '_';
-const QS_Prototype_Key = '+';
+const QS_Reduce_Key = '[';
+const QS_Enlarge_Key = ']';
+const QS_Randomize_Key = '{';
+const QS_Prototype_Key = '}';
+
+const QS_Scale_Up = 1.05;
+const QS_Scale_Down = 0.95;
 
 // Animation provided by @Jinker — https://www.patreon.com/jinker
 const QS_Animation_Path = 'modules/quickscale/assets/spinburst2.webm';
@@ -25,20 +28,15 @@ Hooks.on('init', function () {
   });
 
   game.settings.register('quickscale', 'random-label', {
-    name: 'Randomization Range',
+    name: game.i18n.localize('QSCALE.Random_Range'),
     scope: 'world',
     config: true,
     type: Boolean,
     default: true,
   });
 
-  game.settings.register('quickscale', 'enlarge-key', {
-    scope: 'world',
-    config: false,
-    type: String,
-    default: '=',
-  });
-
+  // Future optional DF Hotkeys integration, not yet functional.
+  /*
   if (game.modules.get('lib-df-hotkeys')?.active) {
     Hotkeys.registerGroup({
       name: 'quickscale.qs-group',
@@ -46,19 +44,20 @@ Hooks.on('init', function () {
     });
 
     Hotkeys.registerShortcut({
-      name: 'quickscale.enlarge-key',
-      label: 'Enlarge',
+      name: 'quickscale.reduce-key',
+      label: 'Reduce',
       group: 'quickscale.qs-group',
-      get: () => game.settings.get('quickscale', 'enlarge-key'),
-      set: async (value) => await game.settings.set('quickscale', 'enlarge-key', value),
+      get: () => game.settings.get('quickscale', 'reduce-key'),
+      set: async (value) => await game.settings.set('quickscale', 'reduce-key', value),
       default: () => {
-        return { key: '=', alt: false, ctrl: false, shift: false };
+        return { key: Hotkeys.keys.BracketLeft, alt: false, ctrl: false, shift: false };
       },
       onKeyDown: (self) => {
-        console.log('You hit my custom hotkey!');
+        console.log('Reduce!');
       },
     });
   }
+  */
 });
 
 Hooks.on('ready', () => {
@@ -141,10 +140,45 @@ function saveNewRange(values, handle, unencoded, tap, positions, noUiSlider) {
 async function updateSize(key) {
   let increase = false;
   if (key == QS_Enlarge_Key) increase = true;
+
+  // Update controlled tokens.
   await canvas.tokens.updateAll(
-    (t) => ({ scale: getNewScale(t.data.scale, increase) }),
+    (t) => ({ scale: getNewTokenScale(t.data.scale, increase) }),
     (t) => t._controlled
   );
+
+  // Update controlled tiles.
+  const tileUpdates = canvas.background.controlled.map((t) => ({
+    _id: t.id,
+    width: t.data.width * (increase ? QS_Scale_Up : QS_Scale_Down),
+    height: t.data.height * (increase ? QS_Scale_Up : QS_Scale_Down),
+  }));
+  await canvas.scene.updateEmbeddedDocuments('Tile', tileUpdates);
+
+  // Update hovered template.
+  const hoveredTemplate = canvas.templates._hover?.document;
+  if (hoveredTemplate) {
+    await hoveredTemplate.update({
+      distance: hoveredTemplate.data.distance * (increase ? QS_Scale_Up : QS_Scale_Down),
+    });
+  }
+
+  // Update hovered light.
+  const hoveredLight = canvas.lighting._hover?.document;
+  if (hoveredLight) {
+    await hoveredLight.update({
+      dim: hoveredLight.data.dim * (increase ? QS_Scale_Up : QS_Scale_Down),
+      bright: hoveredLight.data.bright * (increase ? QS_Scale_Up : QS_Scale_Down),
+    });
+  }
+
+  // Update hovered sound.
+  const hoveredSound = canvas.sounds._hover?.document;
+  if (hoveredSound) {
+    await hoveredSound.update({
+      radius: hoveredSound.data.radius * (increase ? QS_Scale_Up : QS_Scale_Down),
+    });
+  }
 }
 
 // Push current scales to prototypes.
@@ -172,7 +206,8 @@ async function updatePrototype() {
 
 // Scale randomizer. Pulls from range set in module settings.
 async function randomize() {
-  const updates = canvas.tokens.controlled.map((t) => ({
+  // Randomize token scales.
+  const tokenUpdates = canvas.tokens.controlled.map((t) => ({
     _id: t.id,
     scale:
       Math.round(
@@ -182,14 +217,36 @@ async function randomize() {
         ) * 10
       ) / 10, // Extra math here is for decimal truncation.
   }));
-  await canvas.scene.updateEmbeddedDocuments('Token', updates);
+  await canvas.scene.updateEmbeddedDocuments('Token', tokenUpdates);
+
+  // Randomize tile scales.
+  const tileUpdates = canvas.background.controlled.map((t) => {
+    const randomTileScale = getRandomTileScale();
+    return {
+      _id: t.id,
+      width: t.data.width * randomTileScale,
+      height: t.data.height * randomTileScale,
+    };
+  });
+  await canvas.scene.updateEmbeddedDocuments('Tile', tileUpdates);
 }
 
 function getRandomArbitrary(min, max) {
   return Math.random() * (max - min) + min;
 }
 
-function getNewScale(old, increase) {
+function getRandomTileScale() {
+  const randomTileScale =
+    Math.round(
+      getRandomArbitrary(
+        game.settings.get('quickscale', 'random-min'),
+        game.settings.get('quickscale', 'random-max')
+      ) * 10
+    ) / 10;
+  return randomTileScale;
+}
+
+function getNewTokenScale(old, increase) {
   // Get values for the increment/decrement processes.
   let newScale = old;
   if (increase) {
