@@ -93,8 +93,11 @@ Hooks.on('ready', () => {
     if (e.key == QS_Reduce_Key || e.key == QS_Enlarge_Key) {
       updateSize(e.key, false);
     }
+
+    const currentToolLayer = game.canvas.activeLayer.name;
+
     if (e.key == QS_Random_Scale_Key) {
-      switch (game.canvas.activeLayer.name) {
+      switch (currentToolLayer) {
         case 'TokenLayer':
         case 'BackgroundLayer':
           randomizeScale();
@@ -107,10 +110,8 @@ Hooks.on('ready', () => {
       }
     }
     if (e.key == QS_Random_Rotate_Key) {
-      switch (game.canvas.activeLayer.name) {
+      switch (currentToolLayer) {
         case 'TokenLayer':
-          randomizeRotation();
-          break;
         case 'BackgroundLayer':
           randomizeRotation();
           break;
@@ -121,7 +122,7 @@ Hooks.on('ready', () => {
           break;
       }
     }
-    if (e.key == QS_Prototype_Key && game.canvas.activeLayer.name == 'TokenLayer') {
+    if (e.key == QS_Prototype_Key && currentToolLayer == 'TokenLayer') {
       updatePrototype();
     }
   });
