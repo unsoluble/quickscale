@@ -5,7 +5,7 @@ const QS_Large_Reduce_Key = '{';
 const QS_Large_Enlarge_Key = '}';
 const QS_Random_Scale_Key = '{';
 const QS_Random_Rotate_Key = '}';
-const QS_Prototype_Key = '}';
+const QS_Prototype_Key = '|';
 
 const QS_Scale_Up = 1.05;
 const QS_Scale_Down = 0.95;
@@ -106,10 +106,10 @@ Hooks.on('ready', () => {
           break;
       }
     }
-    if (e.key == QS_Prototype_Key) {
+    if (e.key == QS_Random_Rotate_Key) {
       switch (game.canvas.activeLayer.name) {
         case 'TokenLayer':
-          updatePrototype();
+          randomizeRotation();
           break;
         case 'BackgroundLayer':
           randomizeRotation();
@@ -120,6 +120,9 @@ Hooks.on('ready', () => {
           updateSize(e.key, true);
           break;
       }
+    }
+    if (e.key == QS_Prototype_Key && game.canvas.activeLayer.name == 'TokenLayer') {
+      updatePrototype();
     }
   });
 });
@@ -311,6 +314,14 @@ async function randomizeScale() {
 // Rotation randomizer for tiles.
 async function randomizeRotation() {
   const rotation = game.settings.get('quickscale', 'rotation-amount');
+
+  // Update controlled tokens.
+  await canvas.tokens.updateAll(
+    (t) => ({ rotation: t.data.rotation + getRandomArbitrary(0 - rotation, rotation) }),
+    (t) => t._controlled
+  );
+
+  // Update controlled tiles.
   const tileUpdates = canvas.background.controlled.map((t) => {
     return {
       _id: t.id,
