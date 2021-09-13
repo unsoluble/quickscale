@@ -27,10 +27,18 @@ Hooks.on('init', function () {
     default: 1.2,
   });
 
-  game.settings.register('quickscale', 'random-label', {
-    name: game.i18n.localize('QSCALE.Random_Range'),
+  game.settings.register('quickscale', 'token-random-label', {
+    name: game.i18n.localize('QSCALE.Token_Random_Range'),
     scope: 'world',
     config: true,
+    type: Boolean,
+    default: true,
+  });
+
+  game.settings.register('quickscale', 'tile-random-label', {
+    name: game.i18n.localize('QSCALE.Tile_Random_Range'),
+    scope: 'world',
+    config: false,
     type: Boolean,
     default: true,
   });
@@ -86,10 +94,10 @@ Hooks.on('renderSettingsConfig', () => {
   // Hide the inputs that will hold the values but shouldn't be visible.
   $('input[name="quickscale.random-min"]').parent().parent().css('display', 'none');
   $('input[name="quickscale.random-max"]').parent().parent().css('display', 'none');
-  $('input[name="quickscale.random-label"]').css('display', 'none');
+  $('input[name="quickscale.token-random-label"]').css('display', 'none');
 
   // Find the right element to insert after, and insert.
-  const insertionElement = $('input[name="quickscale.random-label"]').parent().next();
+  const insertionElement = $('input[name="quickscale.token-random-label"]').parent().next();
   const injection = `<div id="quickscale-random-slider"></div>`;
 
   // Only inject if it isn't already there.
@@ -221,7 +229,7 @@ async function randomize() {
 
   // Randomize tile scales.
   const tileUpdates = canvas.background.controlled.map((t) => {
-    const randomTileScale = getRandomTileScale();
+    const randomTileScale = getRandomArbitrary(QS_Scale_Down, QS_Scale_Up);
     return {
       _id: t.id,
       width: t.data.width * randomTileScale,
@@ -233,17 +241,6 @@ async function randomize() {
 
 function getRandomArbitrary(min, max) {
   return Math.random() * (max - min) + min;
-}
-
-function getRandomTileScale() {
-  const randomTileScale =
-    Math.round(
-      getRandomArbitrary(
-        game.settings.get('quickscale', 'random-min'),
-        game.settings.get('quickscale', 'random-max')
-      ) * 10
-    ) / 10;
-  return randomTileScale;
 }
 
 function getNewTokenScale(old, increase) {

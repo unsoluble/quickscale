@@ -1,3 +1,4 @@
 {
-  "QSCALE.Random_Range": "Randomization Range"
+  "QSCALE.Token_Random_Range": "Token Randomization Range",
+  "QSCALE.Tile_Random_Range": "Tile Randomization Range"
 }
