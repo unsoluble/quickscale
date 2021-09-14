@@ -1,6 +1,6 @@
 {
   "QSCALE.Token_Random_Range": "Token Scale Randomization Range",
-  "QSCALE.Tile_Random_Range": "Tile Scale Range",
+  "QSCALE.Tile_Random_Range": "Tile Scale Randomization Range",
   "QSCALE.Rotation_Amount": "Maximum Rotation Amount",
   "QSCALE.Rotation_Amount_Hint": "When applying random rotations, rotate +/- up to this many degrees."
 }

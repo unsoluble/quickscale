@@ -14,16 +14,28 @@ const QS_Scale_Down = 0.95;
 const QS_Animation_Path = 'modules/quickscale/assets/spinburst2.webm';
 
 Hooks.on('init', function () {
-  game.settings.register('quickscale', 'random-min', {
-    name: 'Random Min',
+  game.settings.register('quickscale', 'token-random-min', {
     scope: 'world',
     config: true,
     type: Number,
     default: 0.8,
   });
 
-  game.settings.register('quickscale', 'random-max', {
-    name: 'Random Max',
+  game.settings.register('quickscale', 'token-random-max', {
+    scope: 'world',
+    config: true,
+    type: Number,
+    default: 1.2,
+  });
+
+  game.settings.register('quickscale', 'tile-random-min', {
+    scope: 'world',
+    config: true,
+    type: Number,
+    default: 0.8,
+  });
+
+  game.settings.register('quickscale', 'tile-random-max', {
     scope: 'world',
     config: true,
     type: Number,
@@ -41,7 +53,7 @@ Hooks.on('init', function () {
   game.settings.register('quickscale', 'tile-random-label', {
     name: game.i18n.localize('QSCALE.Tile_Random_Range'),
     scope: 'world',
-    config: false,
+    config: true,
     type: Boolean,
     default: true,
   });
@@ -130,26 +142,34 @@ Hooks.on('ready', () => {
 
 Hooks.on('renderSettingsConfig', () => {
   // Hide the inputs that will hold the values but shouldn't be visible.
-  $('input[name="quickscale.random-min"]').parent().parent().css('display', 'none');
-  $('input[name="quickscale.random-max"]').parent().parent().css('display', 'none');
+  $('input[name="quickscale.token-random-min"]').parent().parent().css('display', 'none');
+  $('input[name="quickscale.token-random-max"]').parent().parent().css('display', 'none');
   $('input[name="quickscale.token-random-label"]').css('display', 'none');
+  $('input[name="quickscale.tile-random-min"]').parent().parent().css('display', 'none');
+  $('input[name="quickscale.tile-random-max"]').parent().parent().css('display', 'none');
+  $('input[name="quickscale.tile-random-label"]').css('display', 'none');
 
-  // Find the right element to insert after, and insert.
-  const insertionElement = $('input[name="quickscale.token-random-label"]').parent().next();
-  const injection = `<div id="quickscale-token-slider"></div>`;
+  // Find the right elements to insert after, and build the divs for insertion.
+  const tokenSliderLocation = $('input[name="quickscale.token-random-label"]').parent().next();
+  const tokenSliderInjection = `<div id="quickscale-token-slider"></div>`;
+  const tileSliderLocation = $('input[name="quickscale.tile-random-label"]').parent().next();
+  const tileSliderInjection = `<div id="quickscale-tile-slider"></div>`;
 
-  // Only inject if it isn't already there.
+  // Only inject these if they aren't already there.
   if (!$('#quickscale-token-slider').length) {
-    insertionElement.after(injection);
+    tokenSliderLocation.after(tokenSliderInjection);
+  }
+  if (!$('#quickscale-tile-slider').length) {
+    tileSliderLocation.after(tileSliderInjection);
   }
 
-  // Create a custom two-handled slider.
+  // Create a custom two-handled slider for the token scale range.
   const tokenSlider = document.getElementById('quickscale-token-slider');
 
   noUiSlider.create(tokenSlider, {
     start: [
-      game.settings.get('quickscale', 'random-min'),
-      game.settings.get('quickscale', 'random-max'),
+      game.settings.get('quickscale', 'token-random-min'),
+      game.settings.get('quickscale', 'token-random-max'),
     ],
     tooltips: [wNumb({ decimals: 1 }), wNumb({ decimals: 1 })],
     behaviour: 'drag-all',
@@ -163,6 +183,26 @@ Hooks.on('renderSettingsConfig', () => {
     },
   });
 
+  // Create a second two-handled slider for the tile scale range.
+  const tileSlider = document.getElementById('quickscale-tile-slider');
+
+  noUiSlider.create(tileSlider, {
+    start: [
+      game.settings.get('quickscale', 'tile-random-min'),
+      game.settings.get('quickscale', 'tile-random-max'),
+    ],
+    tooltips: [wNumb({ decimals: 1 }), wNumb({ decimals: 1 })],
+    behaviour: 'drag-all',
+    step: 0.1, // Snap to tenths.
+    margin: 0.2, // Minimum gap between the two handles.
+    padding: 0.1, // Gap at either end.
+    connect: true, // Form coloured span between handles.
+    range: {
+      min: 0.2, // Minimum randomization range of 0.3, minus padding.
+      max: 3.1, // Maximum randomization range of 3.0, plus padding.
+    },
+  });
+
   // Tweak to accommodate TidyUI's smaller available space.
   if (game.modules.get('tidy-ui_game-settings')?.active) {
     $('.noUi-base').css({
@@ -171,15 +211,23 @@ Hooks.on('renderSettingsConfig', () => {
     $('#quickscale-token-slider').css({
       transform: 'translate(30px, 5px)',
     });
+    $('#quickscale-tile-slider').css({
+      transform: 'translate(30px, 5px)',
+    });
   }
 
-  tokenSlider.noUiSlider.on('change', saveNewRange);
+  tokenSlider.noUiSlider.on('change', saveTokenRange);
+  tileSlider.noUiSlider.on('change', saveTileRange);
 });
 
 // On slider changes, save the new values into the actual inputs.
-function saveNewRange(values, handle, unencoded, tap, positions, noUiSlider) {
-  $('input[name="quickscale.random-min"]').val(values[0]);
-  $('input[name="quickscale.random-max"]').val(values[1]);
+function saveTokenRange(values, handle, unencoded, tap, positions, noUiSlider) {
+  $('input[name="quickscale.token-random-min"]').val(values[0]);
+  $('input[name="quickscale.token-random-max"]').val(values[1]);
+}
+function saveTileRange(values, handle, unencoded, tap, positions, noUiSlider) {
+  $('input[name="quickscale.tile-random-min"]').val(values[0]);
+  $('input[name="quickscale.tile-random-max"]').val(values[1]);
 }
 
 // Main scaling function.
@@ -293,8 +341,8 @@ async function randomizeScale() {
     scale:
       Math.round(
         getRandomArbitrary(
-          game.settings.get('quickscale', 'random-min'),
-          game.settings.get('quickscale', 'random-max')
+          game.settings.get('quickscale', 'token-random-min'),
+          game.settings.get('quickscale', 'token-random-max')
         ) * 10
       ) / 10, // Extra math here is for decimal truncation.
   }));
@@ -302,7 +350,10 @@ async function randomizeScale() {
 
   // Randomize tile scales.
   const tileUpdates = canvas.background.controlled.map((t) => {
-    const randomTileScale = getRandomArbitrary(QS_Scale_Down, QS_Scale_Up);
+    const randomTileScale = getRandomArbitrary(
+      game.settings.get('quickscale', 'tile-random-min'),
+      game.settings.get('quickscale', 'tile-random-max')
+    );
     return {
       _id: t.id,
       width: t.data.width * randomTileScale,

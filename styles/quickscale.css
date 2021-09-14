@@ -1,4 +1,5 @@
-#quickscale-token-slider {
+#quickscale-token-slider,
+#quickscale-tile-slider {
   height: 6px;
   box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
   background: #999999;
@@ -8,12 +9,14 @@
   top: -5px;
 }
 
-#quickscale-token-slider .noUi-connect {
+#quickscale-token-slider .noUi-connect,
+#quickscale-tile-slider .noUi-connect {
   background: #c85019;
   cursor: ew-resize;
 }
 
-#quickscale-token-slider .noUi-handle {
+#quickscale-token-slider .noUi-handle,
+#quickscale-tile-slider .noUi-handle {
   box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
   border: 1px solid #000000;
   height: 12px;
@@ -25,7 +28,8 @@
   cursor: grab;
 }
 
-#quickscale-token-slider .noUi-tooltip {
+#quickscale-token-slider .noUi-tooltip,
+#quickscale-tile-slider .noUi-tooltip {
   display: block;
   position: absolute;
   border: none;
@@ -43,6 +47,8 @@
 
 /* Hide markers on slider handles */
 #quickscale-token-slider .noUi-handle::before,
-#quickscale-token-slider .noUi-handle::after {
+#quickscale-tile-slider .noUi-handle::before,
+#quickscale-token-slider .noUi-handle::after,
+#quickscale-tile-slider .noUi-handle::after {
   display: none;
 }
