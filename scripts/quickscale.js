@@ -196,6 +196,56 @@ Hooks.on('renderSettingsConfig', () => {
   tileSlider.noUiSlider.on('change', saveTileRange);
 });
 
+Hooks.on('renderControlsReference', () => {
+  // Build the custom controls section.
+  const injection = `
+    <fieldset class="qs-controls-reference">
+      <legend>
+        <span>QuickScale Controls</span>
+      </legend>
+      <ol class="hotkey-list">
+        <li>
+          <h4>Scale Elements Down or Up</h4>
+          <div class="keys">
+            <span class="key">[</span> <span class="key">]</span>
+            <span class="qs-subtext">(Tokens, Templates, Tiles, Lights, Sounds)</span>
+          </div>
+        </li>
+        <li>
+          <h4>Scale Elements in Large Steps</h4>
+          <div class="keys">
+            <span class="key">{</span> <span class="key">}</span>
+            <span class="qs-subtext">(Templates, Lights, Sounds)</span>
+          </div>
+        </li>
+        <li class="gm">
+          <h4>Save Scales to Prototypes</h4>
+          <div class="keys">
+            <span class="key">|</span>
+            <span class="qs-subtext">(Tokens)</span>
+          </div>
+        </li>
+        <li class="gm">
+          <h4>Randomize Element Scales</h4>
+          <div class="keys">
+            <span class="key">{</span>
+            <span class="qs-subtext">(Tokens, Tiles)</span>
+          </div>
+        </li>
+        <li class="gm">
+          <h4>Randomize Element Rotations</h4>
+          <div class="keys">
+            <span class="key">}</span>
+            <span class="qs-subtext">(Tokens, Tiles)</span>
+          </div>
+        </li>
+      </ol>
+    </fieldset>`;
+
+  // Insert the controls at the bottom of the window.
+  $('#controls-reference > section > div').last().after(injection);
+});
+
 // On slider changes, save the new values into the actual inputs.
 function saveTokenRange(values, handle, unencoded, tap, positions, noUiSlider) {
   $('input[name="quickscale.token-random-min"]').val(values[0]);
