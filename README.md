@@ -6,6 +6,8 @@ _A small module for quickly adjusting the scale of things._
 
 Select elements in a scene, then use the square bracket keys to tweak them (with or without `Shift` for different effects).
 
+![Demo](doc/QuickDemo.gif)
+
 ---
 
 ![Controls](doc/Controls.png)
