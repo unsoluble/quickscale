@@ -4,7 +4,9 @@ _A small module for quickly adjusting the scale of things._
 
 ---
 
-Select elements in a scene, and use the square bracket keys to tweak them (with/without `Shift` for different effects).
+Select elements in a scene, then use the square bracket keys to tweak them (with or without `Shift` for different effects).
+
+---
 
 ![Controls](doc/Controls.png)
 
@@ -26,7 +28,7 @@ Select elements in a scene, and use the square bracket keys to tweak them (with/
 * Non-GM/Assistant players may use these controls on their own placed templates.
 
 ### Settings
-There are a couple settings you can adjust:
+There are a few settings you can adjust:
 
 ![Settings](doc/Settings.png)
 * _Token Scale Randomization Range_ sets the minimum and maximum scale values that tokens will randomize within.
