@@ -114,8 +114,8 @@ Hooks.on('ready', () => {
 });
 
 Hooks.on('renderSettingsConfig', () => {
-  // This is all GM-only for now.
-  if (!game.user.isGM) return;
+  // This is all GM-only.
+  if (game.user.role < CONST.USER_ROLES.ASSISTANT) return;
 
   // Hide the inputs that will hold the values but shouldn't be visible.
   $('input[name="quickscale.token-random-min"]').parent().parent().css('display', 'none');
@@ -198,26 +198,34 @@ Hooks.on('renderSettingsConfig', () => {
 
 Hooks.on('renderControlsReference', () => {
   // Build the custom controls section.
-  const injection = `
+  // Sometimes different text for Player users.
+  const gmAuth = game.user.role >= CONST.USER_ROLES.ASSISTANT;
+
+  let injection = `
     <fieldset class="qs-controls-reference">
       <legend>
         <span>QuickScale Controls</span>
       </legend>
       <ol class="hotkey-list">
         <li>
-          <h4>Scale Elements Down or Up</h4>
+          <h4>${gmAuth ? 'Scale Elements Down or Up' : 'Scale Templates Down or Up'}</h4>
           <div class="keys">
             <span class="key">[</span> <span class="key">]</span>
-            <span class="qs-subtext">(Tokens, Templates, Tiles, Lights, Sounds)</span>
+            <span class="qs-subtext">${
+              gmAuth ? '(Tokens, Templates, Tiles, Lights, Sounds)' : ''
+            }</span>
           </div>
         </li>
         <li>
-          <h4>Scale Elements in Large Steps</h4>
+          <h4>${gmAuth ? 'Scale Elements in Large Steps' : 'Scale Templates in Large Steps'}</h4>
           <div class="keys">
             <span class="key">{</span> <span class="key">}</span>
-            <span class="qs-subtext">(Templates, Lights, Sounds)</span>
+            <span class="qs-subtext">${gmAuth ? '(Templates, Lights, Sounds)' : ''}</span>
           </div>
-        </li>
+        </li>`;
+
+  if (gmAuth) {
+    injection += `
         <li class="gm">
           <h4>Save Scales to Prototypes</h4>
           <div class="keys">
@@ -238,9 +246,10 @@ Hooks.on('renderControlsReference', () => {
             <span class="key">}</span>
             <span class="qs-subtext">(Tokens, Tiles)</span>
           </div>
-        </li>
-      </ol>
-    </fieldset>`;
+        </li>`;
+  }
+
+  injection += `</ol></fieldset>`;
 
   // Insert the controls at the bottom of the window.
   $('#controls-reference > section > div').last().after(injection);
