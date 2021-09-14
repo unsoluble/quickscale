@@ -136,30 +136,30 @@ Hooks.on('renderSettingsConfig', () => {
 
   // Find the right element to insert after, and insert.
   const insertionElement = $('input[name="quickscale.token-random-label"]').parent().next();
-  const injection = `<div id="quickscale-random-slider"></div>`;
+  const injection = `<div id="quickscale-token-slider"></div>`;
 
   // Only inject if it isn't already there.
-  if (!$('#quickscale-random-slider').length) {
+  if (!$('#quickscale-token-slider').length) {
     insertionElement.after(injection);
   }
 
   // Create a custom two-handled slider.
-  const slider = document.getElementById('quickscale-random-slider');
+  const tokenSlider = document.getElementById('quickscale-token-slider');
 
-  noUiSlider.create(slider, {
+  noUiSlider.create(tokenSlider, {
     start: [
       game.settings.get('quickscale', 'random-min'),
       game.settings.get('quickscale', 'random-max'),
     ],
     tooltips: [wNumb({ decimals: 1 }), wNumb({ decimals: 1 })],
     behaviour: 'drag-all',
-    step: 0.1,
-    margin: 0.2,
-    padding: 0.1,
-    connect: true,
+    step: 0.1, // Snap to tenths.
+    margin: 0.2, // Minimum gap between the two handles.
+    padding: 0.1, // Gap at either end.
+    connect: true, // Form coloured span between handles.
     range: {
-      min: 0.2,
-      max: 3.1,
+      min: 0.2, // Minimum token scale of 0.3, minus padding.
+      max: 3.1, // Maximum token scale of 3.0, plus padding.
     },
   });
 
@@ -168,12 +168,12 @@ Hooks.on('renderSettingsConfig', () => {
     $('.noUi-base').css({
       width: '480px',
     });
-    $('#quickscale-random-slider').css({
+    $('#quickscale-token-slider').css({
       transform: 'translate(30px, 5px)',
     });
   }
 
-  slider.noUiSlider.on('change', saveNewRange);
+  tokenSlider.noUiSlider.on('change', saveNewRange);
 });
 
 // On slider changes, save the new values into the actual inputs.
