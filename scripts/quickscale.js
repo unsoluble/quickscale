@@ -75,9 +75,6 @@ Hooks.on('ready', () => {
     if (document.activeElement instanceof HTMLTextAreaElement) return;
     if (document.activeElement.getAttribute('contenteditable') === 'true') return;
 
-    // This is all GM-only for now.
-    if (!game.user.isGM) return;
-
     if (e.key == QS_Reduce_Key || e.key == QS_Enlarge_Key) {
       updateSize(e.key, false);
     }
@@ -117,6 +114,9 @@ Hooks.on('ready', () => {
 });
 
 Hooks.on('renderSettingsConfig', () => {
+  // This is all GM-only for now.
+  if (!game.user.isGM) return;
+
   // Hide the inputs that will hold the values but shouldn't be visible.
   $('input[name="quickscale.token-random-min"]').parent().parent().css('display', 'none');
   $('input[name="quickscale.token-random-max"]').parent().parent().css('display', 'none');
@@ -211,21 +211,69 @@ async function updateSize(key, largeStep) {
   let increase = false;
   if (key == QS_Enlarge_Key || key == QS_Large_Enlarge_Key) increase = true;
 
-  // Update controlled tokens.
-  await canvas.tokens.updateAll(
-    (t) => ({ scale: getNewTokenScale(t.data.scale, increase) }),
-    (t) => t._controlled
-  );
+  // Token, tile, light, and sound controls are only for Assistant or higher.
+  if (game.user.role >= CONST.USER_ROLES.ASSISTANT) {
+    // Update controlled tokens.
+    await canvas.tokens.updateAll(
+      (t) => ({ scale: getNewTokenScale(t.data.scale, increase) }),
+      (t) => t._controlled
+    );
 
-  // Update controlled tiles.
-  const tileUpdates = canvas.background.controlled.map((t) => ({
-    _id: t.id,
-    width: t.data.width * (increase ? QS_Scale_Up : QS_Scale_Down),
-    height: t.data.height * (increase ? QS_Scale_Up : QS_Scale_Down),
-  }));
-  await canvas.scene.updateEmbeddedDocuments('Tile', tileUpdates);
+    // Update controlled tiles.
+    const tileUpdates = canvas.background.controlled.map((t) => ({
+      _id: t.id,
+      width: t.data.width * (increase ? QS_Scale_Up : QS_Scale_Down),
+      height: t.data.height * (increase ? QS_Scale_Up : QS_Scale_Down),
+    }));
+    await canvas.scene.updateEmbeddedDocuments('Tile', tileUpdates);
 
-  // Update hovered template.
+    // Update hovered light.
+    const hoveredLight = canvas.lighting._hover?.document;
+    if (hoveredLight) {
+      const currentDim = hoveredLight.data.dim;
+      const currentBright = hoveredLight.data.bright;
+      let newBright = Math.ceil(currentBright - 5);
+      if (largeStep) {
+        if (Math.ceil(currentDim - 5) > 0 && newBright < 0) {
+          newBright = 0;
+        }
+        await hoveredLight.update({
+          dim: increase ? Math.floor(currentDim + 5) : Math.ceil(currentDim - 5),
+          bright: increase ? Math.floor(currentBright + 5) : newBright,
+        });
+      } else {
+        newBright = Math.ceil(currentBright - 1);
+        if (Math.ceil(currentDim - 1) > 0 && newBright < 0) {
+          newBright = 0;
+        }
+        await hoveredLight.update({
+          dim: increase ? Math.floor(currentDim + 1) : Math.ceil(currentDim - 1),
+          bright: increase ? Math.floor(currentBright + 1) : newBright,
+        });
+      }
+    }
+
+    // Update hovered sound.
+    const hoveredSound = canvas.sounds._hover?.document;
+    if (hoveredSound) {
+      const currentRadius = hoveredSound.data.radius;
+      if (largeStep) {
+        await hoveredSound.update({
+          radius: increase
+            ? Math.floor(currentRadius + 5)
+            : Math.max(Math.ceil(currentRadius - 5), 1),
+        });
+      } else {
+        await hoveredSound.update({
+          radius: increase
+            ? Math.floor(currentRadius + 1)
+            : Math.max(Math.ceil(currentRadius - 1), 1),
+        });
+      }
+    }
+  }
+
+  // Update hovered template. Allowed at the player level.
   const hoveredTemplate = canvas.templates._hover?.document;
   if (hoveredTemplate) {
     const currentDistance = hoveredTemplate.data.distance;
@@ -243,55 +291,13 @@ async function updateSize(key, largeStep) {
       });
     }
   }
-
-  // Update hovered light.
-  const hoveredLight = canvas.lighting._hover?.document;
-  if (hoveredLight) {
-    const currentDim = hoveredLight.data.dim;
-    const currentBright = hoveredLight.data.bright;
-    let newBright = Math.ceil(currentBright - 5);
-    if (largeStep) {
-      if (Math.ceil(currentDim - 5) > 0 && newBright < 0) {
-        newBright = 0;
-      }
-      await hoveredLight.update({
-        dim: increase ? Math.floor(currentDim + 5) : Math.ceil(currentDim - 5),
-        bright: increase ? Math.floor(currentBright + 5) : newBright,
-      });
-    } else {
-      newBright = Math.ceil(currentBright - 1);
-      if (Math.ceil(currentDim - 1) > 0 && newBright < 0) {
-        newBright = 0;
-      }
-      await hoveredLight.update({
-        dim: increase ? Math.floor(currentDim + 1) : Math.ceil(currentDim - 1),
-        bright: increase ? Math.floor(currentBright + 1) : newBright,
-      });
-    }
-  }
-
-  // Update hovered sound.
-  const hoveredSound = canvas.sounds._hover?.document;
-  if (hoveredSound) {
-    const currentRadius = hoveredSound.data.radius;
-    if (largeStep) {
-      await hoveredSound.update({
-        radius: increase
-          ? Math.floor(currentRadius + 5)
-          : Math.max(Math.ceil(currentRadius - 5), 1),
-      });
-    } else {
-      await hoveredSound.update({
-        radius: increase
-          ? Math.floor(currentRadius + 1)
-          : Math.max(Math.ceil(currentRadius - 1), 1),
-      });
-    }
-  }
 }
 
 // Push current scales to prototypes.
 async function updatePrototype() {
+  // Not for players.
+  if (game.user.role < CONST.USER_ROLES.ASSISTANT) return;
+
   const controlledTokens = canvas.tokens.controlled.map((t) => {
     return {
       actorID: t.data.actorId,
@@ -315,6 +321,9 @@ async function updatePrototype() {
 
 // Scale randomizer. Pulls from range set in module settings.
 async function randomizeScale() {
+  // Not for players.
+  if (game.user.role < CONST.USER_ROLES.ASSISTANT) return;
+
   // Randomize token scales.
   const tokenUpdates = canvas.tokens.controlled.map((t) => ({
     _id: t.id,
@@ -345,6 +354,9 @@ async function randomizeScale() {
 
 // Rotation randomizer for tiles.
 async function randomizeRotation() {
+  // Not for players.
+  if (game.user.role < CONST.USER_ROLES.ASSISTANT) return;
+
   const rotation = game.settings.get('quickscale', 'rotation-amount');
 
   // Update controlled tokens.
