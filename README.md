@@ -36,7 +36,7 @@ There are a few settings you can adjust:
 * _Maximum Rotation Amount_ sets the bounds for random rotations — a value of 15 here will allow for random changes between -15° and 15°.
 
 ### Controls
-The control keys are listed in the Controls Reference page found in the Game Settings sidebar.
+The control keys are listed in the **Controls Reference** page found in the Game Settings sidebar.
 
 ### Thanks!
 Many thanks to @Jinker for providing the prototype-saving animation — https://www.patreon.com/jinker — and to everyone who has helped in other ways.
