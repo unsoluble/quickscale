@@ -32,14 +32,14 @@ Hooks.on('init', function () {
     scope: 'world',
     config: true,
     type: Number,
-    default: 0.8,
+    default: 0.9,
   });
 
   game.settings.register('quickscale', 'tile-random-max', {
     scope: 'world',
     config: true,
     type: Number,
-    default: 1.2,
+    default: 1.1,
   });
 
   game.settings.register('quickscale', 'token-random-label', {
@@ -66,30 +66,6 @@ Hooks.on('init', function () {
     type: Number,
     default: 15,
   });
-
-  // Future optional DF Hotkeys integration, not yet functional.
-  /*
-  if (game.modules.get('lib-df-hotkeys')?.active) {
-    Hotkeys.registerGroup({
-      name: 'quickscale.qs-group',
-      label: 'QuickScale',
-    });
-
-    Hotkeys.registerShortcut({
-      name: 'quickscale.reduce-key',
-      label: 'Reduce',
-      group: 'quickscale.qs-group',
-      get: () => game.settings.get('quickscale', 'reduce-key'),
-      set: async (value) => await game.settings.set('quickscale', 'reduce-key', value),
-      default: () => {
-        return { key: Hotkeys.keys.BracketLeft, alt: false, ctrl: false, shift: false };
-      },
-      onKeyDown: (self) => {
-        console.log('Reduce!');
-      },
-    });
-  }
-  */
 });
 
 Hooks.on('ready', () => {
@@ -194,12 +170,12 @@ Hooks.on('renderSettingsConfig', () => {
     tooltips: [wNumb({ decimals: 1 }), wNumb({ decimals: 1 })],
     behaviour: 'drag-all',
     step: 0.1, // Snap to tenths.
-    margin: 0.2, // Minimum gap between the two handles.
+    margin: 0.1, // Minimum gap between the two handles.
     padding: 0.1, // Gap at either end.
     connect: true, // Form coloured span between handles.
     range: {
-      min: 0.2, // Minimum randomization range of 0.3, minus padding.
-      max: 3.1, // Maximum randomization range of 3.0, plus padding.
+      min: 0.4, // Minimum randomization range of 0.5, minus padding.
+      max: 1.6, // Maximum randomization range of 1.5, plus padding.
     },
   });
 
@@ -233,7 +209,7 @@ function saveTileRange(values, handle, unencoded, tap, positions, noUiSlider) {
 // Main scaling function.
 async function updateSize(key, largeStep) {
   let increase = false;
-  if (key == QS_Enlarge_Key || key == QS_Prototype_Key) increase = true;
+  if (key == QS_Enlarge_Key || key == QS_Large_Enlarge_Key) increase = true;
 
   // Update controlled tokens.
   await canvas.tokens.updateAll(
@@ -255,11 +231,15 @@ async function updateSize(key, largeStep) {
     const currentDistance = hoveredTemplate.data.distance;
     if (largeStep) {
       await hoveredTemplate.update({
-        distance: increase ? Math.floor(currentDistance + 5) : Math.ceil(currentDistance - 5),
+        distance: increase
+          ? Math.floor(currentDistance + 5)
+          : Math.max(Math.ceil(currentDistance - 5), 1),
       });
     } else {
       await hoveredTemplate.update({
-        distance: increase ? Math.floor(currentDistance + 1) : Math.ceil(currentDistance - 1),
+        distance: increase
+          ? Math.floor(currentDistance + 1)
+          : Math.max(Math.ceil(currentDistance - 1), 1),
       });
     }
   }
@@ -298,13 +278,13 @@ async function updateSize(key, largeStep) {
       await hoveredSound.update({
         radius: increase
           ? Math.floor(currentRadius + 5)
-          : Math.max(Math.ceil(currentRadius - 5), 0),
+          : Math.max(Math.ceil(currentRadius - 5), 1),
       });
     } else {
       await hoveredSound.update({
         radius: increase
           ? Math.floor(currentRadius + 1)
-          : Math.max(Math.ceil(currentRadius - 1), 0),
+          : Math.max(Math.ceil(currentRadius - 1), 1),
       });
     }
   }
