@@ -68,49 +68,97 @@ Hooks.on('init', function () {
   });
 });
 
+Hooks.once('init', function () {
+  // If the DF Hotkeys module is present, set it up to allow for custom keybinds.
+  if (game.modules.get('lib-df-hotkeys')?.active) {
+    Hotkeys.registerGroup({
+      name: 'quickscale.qs-controls',
+      label: game.i18n.localize('QSCALE.DFKEYS.Group_Name'),
+    });
+
+    Hotkeys.registerShortcut({
+      name: 'quickscale.reduce-key',
+      label: game.i18n.localize('QSCALE.DFKEYS.Reduce'),
+      group: 'quickscale.qs-controls',
+      default: { key: Hotkeys.keys.BracketLeft, alt: false, ctrl: false, shift: false },
+      repeat: true,
+      onKeyDown: (self) => {
+        updateSize(QS_Reduce_Key, false);
+      },
+    });
+
+    Hotkeys.registerShortcut({
+      name: 'quickscale.enlarge-key',
+      label: game.i18n.localize('QSCALE.DFKEYS.Enlarge'),
+      group: 'quickscale.qs-controls',
+      default: { key: Hotkeys.keys.BracketRight, alt: false, ctrl: false, shift: false },
+      repeat: true,
+      onKeyDown: (self) => {
+        updateSize(QS_Enlarge_Key, false);
+      },
+    });
+
+    Hotkeys.registerShortcut({
+      name: 'quickscale.random-scale-key',
+      label: game.i18n.localize('QSCALE.DFKEYS.Random_Scale'),
+      group: 'quickscale.qs-controls',
+      default: { key: Hotkeys.keys.BracketLeft, alt: false, ctrl: false, shift: true },
+      repeat: true,
+      onKeyDown: (self) => {
+        handleRandomScaleKey(game.canvas.activeLayer.name, QS_Random_Scale_Key);
+      },
+    });
+
+    Hotkeys.registerShortcut({
+      name: 'quickscale.random-rotation-key',
+      label: game.i18n.localize('QSCALE.DFKEYS.Random_Rotation'),
+      group: 'quickscale.qs-controls',
+      default: { key: Hotkeys.keys.BracketRight, alt: false, ctrl: false, shift: true },
+      repeat: true,
+      onKeyDown: (self) => {
+        handleRandomRotationKey(game.canvas.activeLayer.name, QS_Random_Rotate_Key);
+      },
+    });
+
+    Hotkeys.registerShortcut({
+      name: 'quickscale.prototype-key',
+      label: game.i18n.localize('QSCALE.DFKEYS.Save_Prototype'),
+      group: 'quickscale.qs-controls',
+      default: { key: Hotkeys.keys.Backslash, alt: false, ctrl: false, shift: true },
+      repeat: true,
+      onKeyDown: (self) => {
+        if (game.canvas.activeLayer.name == 'TokenLayer') updatePrototype();
+      },
+    });
+  }
+});
+
 Hooks.on('ready', () => {
-  window.addEventListener('keypress', (e) => {
-    // Don't trigger if we're in a text entry field.
-    if (document.activeElement instanceof HTMLInputElement) return;
-    if (document.activeElement instanceof HTMLTextAreaElement) return;
-    if (document.activeElement.getAttribute('contenteditable') === 'true') return;
+  // Only set up our own key listener if DF Hotkeys isn't handling this.
+  if (!game.modules.get('lib-df-hotkeys')?.active) {
+    window.addEventListener('keypress', (e) => {
+      // Don't trigger if we're in a text entry field.
+      if (document.activeElement instanceof HTMLInputElement) return;
+      if (document.activeElement instanceof HTMLTextAreaElement) return;
+      if (document.activeElement.getAttribute('contenteditable') === 'true') return;
 
-    if (e.key == QS_Reduce_Key || e.key == QS_Enlarge_Key) {
-      updateSize(e.key, false);
-    }
-
-    const currentToolLayer = game.canvas.activeLayer.name;
-
-    if (e.key == QS_Random_Scale_Key) {
-      switch (currentToolLayer) {
-        case 'TokenLayer':
-        case 'BackgroundLayer':
-          randomizeScale();
-          break;
-        case 'TemplateLayer':
-        case 'LightingLayer':
-        case 'SoundsLayer':
-          updateSize(e.key, true);
-          break;
+      if (e.key == QS_Reduce_Key || e.key == QS_Enlarge_Key) {
+        updateSize(e.key, false);
       }
-    }
-    if (e.key == QS_Random_Rotate_Key) {
-      switch (currentToolLayer) {
-        case 'TokenLayer':
-        case 'BackgroundLayer':
-          randomizeRotation();
-          break;
-        case 'TemplateLayer':
-        case 'LightingLayer':
-        case 'SoundsLayer':
-          updateSize(e.key, true);
-          break;
+
+      const currentToolLayer = game.canvas.activeLayer.name;
+
+      if (e.key == QS_Random_Scale_Key) {
+        handleRandomScaleKey(currentToolLayer, e.key);
       }
-    }
-    if (e.key == QS_Prototype_Key && currentToolLayer == 'TokenLayer') {
-      updatePrototype();
-    }
-  });
+      if (e.key == QS_Random_Rotate_Key) {
+        handleRandomRotationKey(currentToolLayer, e.key);
+      }
+      if (e.key == QS_Prototype_Key && currentToolLayer == 'TokenLayer') {
+        updatePrototype();
+      }
+    });
+  }
 });
 
 Hooks.on('renderSettingsConfig', () => {
@@ -204,62 +252,130 @@ Hooks.on('renderControlsReference', () => {
   let injection = `
     <fieldset class="qs-controls-reference">
       <legend>
-        <span>QuickScale Controls</span>
+        <span>${game.i18n.localize('QSCALE.REFERENCE.Group_Name')}</span>
       </legend>
       <ol class="hotkey-list">
         <li>
-          <h4>${gmAuth ? 'Scale Elements Down or Up' : 'Scale Templates Down or Up'}</h4>
+          <h4>${
+            gmAuth
+              ? game.i18n.localize('QSCALE.REFERENCE.Scale_Elements')
+              : game.i18n.localize('QSCALE.REFERENCE.Scale_Templates')
+          }</h4>
           <div class="keys">
-            <span class="key">[</span> <span class="key">]</span>
+            <span class="key">${QS_Reduce_Key}</span>
+            <span class="key">${QS_Enlarge_Key}</span>
             <span class="qs-subtext">${
-              gmAuth ? '(Tokens, Templates, Tiles, Lights, Sounds)' : ''
+              gmAuth
+                ? '(' +
+                  game.i18n.localize('QSCALE.REFERENCE.Tokens') +
+                  ', ' +
+                  game.i18n.localize('QSCALE.REFERENCE.Templates') +
+                  ', ' +
+                  game.i18n.localize('QSCALE.REFERENCE.Tiles') +
+                  ', ' +
+                  game.i18n.localize('QSCALE.REFERENCE.Lights') +
+                  ', ' +
+                  game.i18n.localize('QSCALE.REFERENCE.Sounds') +
+                  ')'
+                : ''
             }</span>
           </div>
         </li>
         <li>
-          <h4>${gmAuth ? 'Scale Elements in Large Steps' : 'Scale Templates in Large Steps'}</h4>
+          <h4>${
+            gmAuth
+              ? game.i18n.localize('QSCALE.REFERENCE.Elements_Large')
+              : game.i18n.localize('QSCALE.REFERENCE.Templates_Large')
+          }</h4>
           <div class="keys">
-            <span class="key">{</span> <span class="key">}</span>
-            <span class="qs-subtext">${gmAuth ? '(Templates, Lights, Sounds)' : ''}</span>
+            <span class="key">${QS_Random_Scale_Key}</span>
+            <span class="key">${QS_Random_Rotate_Key}</span>
+            <span class="qs-subtext">${
+              gmAuth
+                ? '(' +
+                  game.i18n.localize('QSCALE.REFERENCE.Templates') +
+                  ', ' +
+                  game.i18n.localize('QSCALE.REFERENCE.Lights') +
+                  ', ' +
+                  game.i18n.localize('QSCALE.REFERENCE.Sounds') +
+                  ')'
+                : ''
+            }</span>
           </div>
         </li>`;
 
   if (gmAuth) {
     injection += `
         <li class="gm">
-          <h4>Save Scales to Prototypes</h4>
+          <h4>${game.i18n.localize('QSCALE.REFERENCE.Save_Prototypes')}</h4>
           <div class="keys">
-            <span class="key">|</span>
-            <span class="qs-subtext">(Tokens)</span>
+            <span class="key">${QS_Prototype_Key}</span>
+            <span class="qs-subtext">(${game.i18n.localize('QSCALE.REFERENCE.Tokens')})</span>
           </div>
         </li>
         <li class="gm">
-          <h4>Randomize Element Scales</h4>
+          <h4>${game.i18n.localize('QSCALE.REFERENCE.Randomize_Scales')}</h4>
           <div class="keys">
-            <span class="key">{</span>
-            <span class="qs-subtext">(Tokens, Tiles)</span>
+            <span class="key">${QS_Random_Scale_Key}</span>
+            <span class="qs-subtext">(${game.i18n.localize(
+              'QSCALE.REFERENCE.Tokens'
+            )}, ${game.i18n.localize('QSCALE.REFERENCE.Tiles')})</span>
           </div>
         </li>
         <li class="gm">
-          <h4>Randomize Element Rotations</h4>
+          <h4>${game.i18n.localize('QSCALE.REFERENCE.Randomize_Rotations')}</h4>
           <div class="keys">
-            <span class="key">}</span>
-            <span class="qs-subtext">(Tokens, Tiles)</span>
+            <span class="key">${QS_Random_Rotate_Key}</span>
+            <span class="qs-subtext">(${game.i18n.localize(
+              'QSCALE.REFERENCE.Tokens'
+            )}, ${game.i18n.localize('QSCALE.REFERENCE.Tiles')})</span>
           </div>
         </li>`;
   }
 
   injection += `</ol></fieldset>`;
 
-  // Insert the controls at the bottom of the window.
-  $('#controls-reference > section > div').last().after(injection);
+  // Insert the controls at the bottom of the window, but only if
+  // DF Hotkeys isn't being used to define custom keys.
+  if (!game.modules.get('lib-df-hotkeys')?.active) {
+    $('#controls-reference > section > div').last().after(injection);
+  }
 });
+
+function handleRandomScaleKey(currentToolLayer, key) {
+  switch (currentToolLayer) {
+    case 'TokenLayer':
+    case 'BackgroundLayer':
+      randomizeScale();
+      break;
+    case 'TemplateLayer':
+    case 'LightingLayer':
+    case 'SoundsLayer':
+      updateSize(key, true);
+      break;
+  }
+}
+
+function handleRandomRotationKey(currentToolLayer, key) {
+  switch (currentToolLayer) {
+    case 'TokenLayer':
+    case 'BackgroundLayer':
+      randomizeRotation();
+      break;
+    case 'TemplateLayer':
+    case 'LightingLayer':
+    case 'SoundsLayer':
+      updateSize(key, true);
+      break;
+  }
+}
 
 // On slider changes, save the new values into the actual inputs.
 function saveTokenRange(values, handle, unencoded, tap, positions, noUiSlider) {
   $('input[name="quickscale.token-random-min"]').val(values[0]);
   $('input[name="quickscale.token-random-max"]').val(values[1]);
 }
+
 function saveTileRange(values, handle, unencoded, tap, positions, noUiSlider) {
   $('input[name="quickscale.tile-random-min"]').val(values[0]);
   $('input[name="quickscale.tile-random-max"]').val(values[1]);
