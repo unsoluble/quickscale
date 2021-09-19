@@ -2,5 +2,26 @@
   "QSCALE.Token_Random_Range": "Token Scale Randomization Range",
   "QSCALE.Tile_Random_Range": "Tile Scale Randomization Range",
   "QSCALE.Rotation_Amount": "Maximum Rotation Amount",
-  "QSCALE.Rotation_Amount_Hint": "When applying random rotations, rotate +/- up to this many degrees."
+  "QSCALE.Rotation_Amount_Hint": "When applying random rotations, rotate +/- up to this many degrees.",
+
+  "QSCALE.DFKEYS.Group_Name": "QuickScale Controls",
+  "QSCALE.DFKEYS.Reduce": "Reduce",
+  "QSCALE.DFKEYS.Enlarge": "Enlarge",
+  "QSCALE.DFKEYS.Random_Scale": "Random Scale",
+  "QSCALE.DFKEYS.Random_Rotation": "Random Rotation",
+  "QSCALE.DFKEYS.Save_Prototype": "Save Prototype",
+
+  "QSCALE.REFERENCE.Group_Name": "QuickScale Controls",
+  "QSCALE.REFERENCE.Scale_Elements": "Scale Elements Down or Up",
+  "QSCALE.REFERENCE.Scale_Templates": "Scale Templates Down or Up",
+  "QSCALE.REFERENCE.Elements_Large": "Scale Elements in Large Steps",
+  "QSCALE.REFERENCE.Templates_Large": "Scale Templates in Large Steps",
+  "QSCALE.REFERENCE.Save_Prototypes": "Save Scales to Prototypes",
+  "QSCALE.REFERENCE.Randomize_Scales": "Randomize Element Scales",
+  "QSCALE.REFERENCE.Randomize_Rotations": "Randomize Element Rotations",
+  "QSCALE.REFERENCE.Tokens": "Tokens",
+  "QSCALE.REFERENCE.Templates": "Templates",
+  "QSCALE.REFERENCE.Tiles": "Tiles",
+  "QSCALE.REFERENCE.Lights": "Lights",
+  "QSCALE.REFERENCE.Sounds": "Sounds"
 }
