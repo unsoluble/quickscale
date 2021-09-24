@@ -10,6 +10,7 @@
   "QSCALE.DFKEYS.Random_Scale": "Random Scale",
   "QSCALE.DFKEYS.Random_Rotation": "Random Rotation",
   "QSCALE.DFKEYS.Save_Prototype": "Save Prototype",
+  "QSCALE.DFKEYS.Revert_Prototype": "Revert Prototype",
 
   "QSCALE.REFERENCE.Group_Name": "QuickScale Controls",
   "QSCALE.REFERENCE.Scale_Elements": "Scale Elements Down or Up",
@@ -17,6 +18,7 @@
   "QSCALE.REFERENCE.Elements_Large": "Scale Elements in Large Steps",
   "QSCALE.REFERENCE.Templates_Large": "Scale Templates in Large Steps",
   "QSCALE.REFERENCE.Save_Prototypes": "Save Scales to Prototypes",
+  "QSCALE.REFERENCE.Revert_Prototypes": "Revert Scales to Prototypes",
   "QSCALE.REFERENCE.Randomize_Scales": "Randomize Element Scales",
   "QSCALE.REFERENCE.Randomize_Rotations": "Randomize Element Rotations",
   "QSCALE.REFERENCE.Tokens": "Tokens",

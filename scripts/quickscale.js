@@ -6,12 +6,14 @@ const QS_Large_Enlarge_Key = '}';
 const QS_Random_Scale_Key = '{';
 const QS_Random_Rotate_Key = '}';
 const QS_Prototype_Key = '|';
+const QS_Revert_Prototype_Key = '\\';
 
 const QS_Scale_Up = 1.05;
 const QS_Scale_Down = 0.95;
 
-// Animation provided by @Jinker — https://www.patreon.com/jinker
-const QS_Animation_Path = 'modules/quickscale/assets/spinburst2.webm';
+// Animations provided by @Jinker — https://www.patreon.com/jinker
+const QS_Save_Animation_Path = 'modules/quickscale/assets/spinburst2.webm';
+const QS_Revert_Animation_Path = 'modules/quickscale/assets/boom7.webm';
 
 Hooks.on('init', function () {
   game.settings.register('quickscale', 'token-random-min', {
@@ -130,6 +132,17 @@ Hooks.once('init', function () {
         if (game.canvas.activeLayer.name == 'TokenLayer') updatePrototype();
       },
     });
+
+    Hotkeys.registerShortcut({
+      name: 'quickscale.revert-prototype-key',
+      label: game.i18n.localize('QSCALE.DFKEYS.Revert_Prototype'),
+      group: 'quickscale.qs-controls',
+      default: { key: Hotkeys.keys.Backslash, alt: false, ctrl: false, shift: false },
+      repeat: true,
+      onKeyDown: (self) => {
+        if (game.canvas.activeLayer.name == 'TokenLayer') revertPrototype();
+      },
+    });
   }
 });
 
@@ -156,6 +169,9 @@ Hooks.on('ready', () => {
       }
       if (e.key == QS_Prototype_Key && currentToolLayer == 'TokenLayer') {
         updatePrototype();
+      }
+      if (e.key == QS_Revert_Prototype_Key && currentToolLayer == 'TokenLayer') {
+        revertPrototype();
       }
     });
   }
@@ -313,6 +329,13 @@ Hooks.on('renderControlsReference', () => {
             <span class="qs-subtext">(${game.i18n.localize('QSCALE.REFERENCE.Tokens')})</span>
           </div>
         </li>
+        <li class="gm">
+        <h4>${game.i18n.localize('QSCALE.REFERENCE.Revert_Prototypes')}</h4>
+        <div class="keys">
+          <span class="key">${QS_Revert_Prototype_Key}</span>
+          <span class="qs-subtext">(${game.i18n.localize('QSCALE.REFERENCE.Tokens')})</span>
+        </div>
+      </li>
         <li class="gm">
           <h4>${game.i18n.localize('QSCALE.REFERENCE.Randomize_Scales')}</h4>
           <div class="keys">
@@ -490,7 +513,25 @@ async function updatePrototype() {
   // Fire off an animation for visual feedback.
   const tokens = canvas.tokens.placeables.filter((t) => t._controlled);
   for (let t of tokens) {
-    await createAnimation(t.data._id);
+    await createAnimation(true, t.data._id);
+  }
+}
+
+// Revert scales to original prototype scales.
+async function revertPrototype() {
+  // Not for players.
+  if (game.user.role < CONST.USER_ROLES.ASSISTANT) return;
+
+  // Update controlled tokens.
+  await canvas.tokens.updateAll(
+    (t) => ({ scale: t.document._actor.data.token.scale }),
+    (t) => t._controlled
+  );
+
+  // Fire off an animation for visual feedback.
+  const tokens = canvas.tokens.placeables.filter((t) => t._controlled);
+  for (let t of tokens) {
+    await createAnimation(false, t.data._id);
   }
 }
 
@@ -567,13 +608,15 @@ function getNewTokenScale(old, increase) {
 
 // This whole bit was cribbed from Kandashi's Next Up module:
 // https://github.com/kandashi/Next-Up
-async function createAnimation(tokenID) {
+async function createAnimation(save, tokenID) {
   const token = canvas.tokens.get(tokenID);
-  const animationTexture = await loadTexture(QS_Animation_Path);
+  const animationTexture = await loadTexture(
+    save ? QS_Save_Animation_Path : QS_Revert_Animation_Path
+  );
   const textureSize = canvas.grid.size + canvas.dimensions.size;
   animationTexture.orig = {
-    height: textureSize,
-    width: textureSize,
+    height: save ? textureSize : textureSize / 2,
+    width: save ? textureSize : textureSize / 2,
     x: textureSize / 2,
     y: textureSize / 2,
   };
@@ -586,7 +629,10 @@ async function createAnimation(tokenID) {
   const source = getProperty(animation._texture, 'baseTexture.resource.source');
   source.loop = false;
   game.video.play(source);
-  setTimeout(() => {
-    token.removeChild(sprite);
-  }, 1200);
+  setTimeout(
+    () => {
+      token.removeChild(sprite);
+    },
+    save ? 1200 : 2200
+  );
 }
