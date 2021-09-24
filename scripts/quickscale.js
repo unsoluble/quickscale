@@ -575,7 +575,7 @@ async function randomizeRotation() {
 
   const rotation = game.settings.get('quickscale', 'rotation-amount');
 
-  // Update controlled tokens.
+  // Update controlled tokens. Check for rotation lock, don't rotate if true.
   await canvas.tokens.updateAll(
     (t) => ({
       rotation: t.data.lockRotation
