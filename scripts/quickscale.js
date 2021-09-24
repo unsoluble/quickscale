@@ -577,7 +577,11 @@ async function randomizeRotation() {
 
   // Update controlled tokens.
   await canvas.tokens.updateAll(
-    (t) => ({ rotation: Math.round(t.data.rotation + getRandomArbitrary(0 - rotation, rotation)) }),
+    (t) => ({
+      rotation: t.data.lockRotation
+        ? t.data.rotation
+        : Math.round(t.data.rotation + getRandomArbitrary(0 - rotation, rotation)),
+    }),
     (t) => t._controlled
   );
 
