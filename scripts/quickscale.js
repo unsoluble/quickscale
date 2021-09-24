@@ -520,8 +520,8 @@ async function randomizeScale() {
     );
     return {
       _id: t.id,
-      width: t.data.width * randomTileScale,
-      height: t.data.height * randomTileScale,
+      width: Math.round(t.data.width * randomTileScale),
+      height: Math.round(t.data.height * randomTileScale),
     };
   });
   await canvas.scene.updateEmbeddedDocuments('Tile', tileUpdates);
@@ -536,7 +536,7 @@ async function randomizeRotation() {
 
   // Update controlled tokens.
   await canvas.tokens.updateAll(
-    (t) => ({ rotation: t.data.rotation + getRandomArbitrary(0 - rotation, rotation) }),
+    (t) => ({ rotation: Math.round(t.data.rotation + getRandomArbitrary(0 - rotation, rotation)) }),
     (t) => t._controlled
   );
 
@@ -544,7 +544,7 @@ async function randomizeRotation() {
   const tileUpdates = canvas.background.controlled.map((t) => {
     return {
       _id: t.id,
-      rotation: t.data.rotation + getRandomArbitrary(0 - rotation, rotation),
+      rotation: Math.round(t.data.rotation + getRandomArbitrary(0 - rotation, rotation)),
     };
   });
   await canvas.scene.updateEmbeddedDocuments('Tile', tileUpdates);
