@@ -428,26 +428,53 @@ async function updateSize(key, largeStep) {
     // Update hovered light.
     const hoveredLight = canvas.lighting._hover?.document;
     if (hoveredLight) {
-      const currentDim = hoveredLight.data.dim;
-      const currentBright = hoveredLight.data.bright;
-      let newBright = Math.ceil(currentBright - 5);
-      if (largeStep) {
-        if (Math.ceil(currentDim - 5) > 0 && newBright < 0) {
-          newBright = 0;
+      // Two different data paths for v8 and v9.
+      if (isNewerVersion(game.data.version, '9')) {
+        let currentDim = hoveredLight.data.config.dim;
+        let currentBright = hoveredLight.data.config.bright;
+
+        let newBright = Math.ceil(currentBright - 5);
+        if (largeStep) {
+          if (Math.ceil(currentDim - 5) > 0 && newBright < 0) {
+            newBright = 0;
+          }
+          await hoveredLight.update({
+            'config.dim': increase ? Math.floor(currentDim + 5) : Math.ceil(currentDim - 5),
+            'config.bright': increase ? Math.floor(currentBright + 5) : newBright,
+          });
+        } else {
+          newBright = Math.ceil(currentBright - 1);
+          if (Math.ceil(currentDim - 1) > 0 && newBright < 0) {
+            newBright = 0;
+          }
+          await hoveredLight.update({
+            'config.dim': increase ? Math.floor(currentDim + 1) : Math.ceil(currentDim - 1),
+            'config.bright': increase ? Math.floor(currentBright + 1) : newBright,
+          });
         }
-        await hoveredLight.update({
-          dim: increase ? Math.floor(currentDim + 5) : Math.ceil(currentDim - 5),
-          bright: increase ? Math.floor(currentBright + 5) : newBright,
-        });
       } else {
-        newBright = Math.ceil(currentBright - 1);
-        if (Math.ceil(currentDim - 1) > 0 && newBright < 0) {
-          newBright = 0;
+        let currentDim = hoveredLight.data.dim;
+        let currentBright = hoveredLight.data.bright;
+
+        let newBright = Math.ceil(currentBright - 5);
+        if (largeStep) {
+          if (Math.ceil(currentDim - 5) > 0 && newBright < 0) {
+            newBright = 0;
+          }
+          await hoveredLight.update({
+            dim: increase ? Math.floor(currentDim + 5) : Math.ceil(currentDim - 5),
+            bright: increase ? Math.floor(currentBright + 5) : newBright,
+          });
+        } else {
+          newBright = Math.ceil(currentBright - 1);
+          if (Math.ceil(currentDim - 1) > 0 && newBright < 0) {
+            newBright = 0;
+          }
+          await hoveredLight.update({
+            dim: increase ? Math.floor(currentDim + 1) : Math.ceil(currentDim - 1),
+            bright: increase ? Math.floor(currentBright + 1) : newBright,
+          });
         }
-        await hoveredLight.update({
-          dim: increase ? Math.floor(currentDim + 1) : Math.ceil(currentDim - 1),
-          bright: increase ? Math.floor(currentBright + 1) : newBright,
-        });
       }
     }
 
