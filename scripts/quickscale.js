@@ -369,6 +369,7 @@ function handleRandomScaleKey(currentToolLayer, key) {
   switch (currentToolLayer) {
     case 'TokenLayer':
     case 'BackgroundLayer':
+    case 'ForegroundLayer':
       randomizeScale();
       break;
     case 'TemplateLayer':
@@ -383,6 +384,7 @@ function handleRandomRotationKey(currentToolLayer, key) {
   switch (currentToolLayer) {
     case 'TokenLayer':
     case 'BackgroundLayer':
+    case 'ForegroundLayer':
       randomizeRotation();
       break;
     case 'TemplateLayer':
@@ -418,7 +420,11 @@ async function updateSize(key, largeStep) {
     );
 
     // Update controlled tiles.
-    const tileUpdates = canvas.background.controlled.map((t) => ({
+    const controlledTiles =
+      canvas.background.controlled.length == 0
+        ? canvas.foreground.controlled
+        : canvas.background.controlled;
+    const tileUpdates = controlledTiles.map((t) => ({
       _id: t.id,
       width: t.data.width * (increase ? QS_Scale_Up : QS_Scale_Down),
       height: t.data.height * (increase ? QS_Scale_Up : QS_Scale_Down),
@@ -578,10 +584,16 @@ async function randomizeScale() {
         ) * 10
       ) / 10, // Extra math here is for decimal truncation.
   }));
-  await canvas.scene.updateEmbeddedDocuments('Token', tokenUpdates);
+  if (canvas.tokens.controlled.length > 0) {
+    await canvas.scene.updateEmbeddedDocuments('Token', tokenUpdates);
+  }
 
   // Randomize tile scales.
-  const tileUpdates = canvas.background.controlled.map((t) => {
+  const controlledTiles =
+    canvas.background.controlled.length == 0
+      ? canvas.foreground.controlled
+      : canvas.background.controlled;
+  const tileUpdates = controlledTiles.map((t) => {
     const randomTileScale = getRandomArbitrary(
       game.settings.get('quickscale', 'tile-random-min'),
       game.settings.get('quickscale', 'tile-random-max')
@@ -592,7 +604,9 @@ async function randomizeScale() {
       height: Math.round(t.data.height * randomTileScale),
     };
   });
-  await canvas.scene.updateEmbeddedDocuments('Tile', tileUpdates);
+  if (controlledTiles.length > 0) {
+    await canvas.scene.updateEmbeddedDocuments('Tile', tileUpdates);
+  }
 }
 
 // Rotation randomizer for tiles.
@@ -613,7 +627,11 @@ async function randomizeRotation() {
   );
 
   // Update controlled tiles.
-  const tileUpdates = canvas.background.controlled.map((t) => {
+  const controlledTiles =
+    canvas.background.controlled.length == 0
+      ? canvas.foreground.controlled
+      : canvas.background.controlled;
+  const tileUpdates = controlledTiles.map((t) => {
     return {
       _id: t.id,
       rotation: Math.round(t.data.rotation + getRandomArbitrary(0 - rotation, rotation)),
