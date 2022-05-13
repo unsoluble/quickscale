@@ -15,59 +15,45 @@ const QS_Scale_Down = 0.95;
 const QS_Save_Animation_Path = 'modules/quickscale/assets/spinburst2.webm';
 const QS_Revert_Animation_Path = 'modules/quickscale/assets/boom7.webm';
 
-Hooks.on('init', function () {
-  game.settings.register('quickscale', 'token-random-min', {
-    scope: 'world',
-    config: true,
-    type: Number,
-    default: 0.8,
-  });
-
-  game.settings.register('quickscale', 'token-random-max', {
-    scope: 'world',
-    config: true,
-    type: Number,
-    default: 1.2,
-  });
-
-  game.settings.register('quickscale', 'tile-random-min', {
-    scope: 'world',
-    config: true,
-    type: Number,
-    default: 0.9,
-  });
-
-  game.settings.register('quickscale', 'tile-random-max', {
-    scope: 'world',
-    config: true,
-    type: Number,
-    default: 1.1,
-  });
-
-  game.settings.register('quickscale', 'token-random-label', {
+const defaultSettings = [
+  { id: 'token-random-min', name: '', hint: '', type: Number, default: 0.8 },
+  { id: 'token-random-max', name: '', hint: '', type: Number, default: 1.2 },
+  { id: 'tile-random-min', name: '', hint: '', type: Number, default: 0.9 },
+  { id: 'tile-random-max', name: '', hint: '', type: Number, default: 1.1 },
+  {
+    id: 'token-random-label',
     name: game.i18n.localize('QSCALE.Token_Random_Range'),
-    scope: 'world',
-    config: true,
+    hint: '',
     type: Boolean,
     default: true,
-  });
-
-  game.settings.register('quickscale', 'tile-random-label', {
+  },
+  {
+    id: 'tile-random-label',
     name: game.i18n.localize('QSCALE.Tile_Random_Range'),
-    scope: 'world',
-    config: true,
+    hint: '',
     type: Boolean,
     default: true,
-  });
-
-  game.settings.register('quickscale', 'rotation-amount', {
+  },
+  {
+    id: 'rotation-amount',
     name: game.i18n.localize('QSCALE.Rotation_Amount'),
     hint: game.i18n.localize('QSCALE.Rotation_Amount_Hint'),
-    scope: 'world',
-    config: true,
     type: Number,
     default: 15,
-  });
+  },
+];
+
+Hooks.on('init', function () {
+  for (const setting of defaultSettings) {
+    game.settings.register('quickscale', setting.id, {
+      name: setting.name,
+      hint: setting.hint,
+      scope: 'world',
+      config: true,
+      type: setting.type,
+      default: setting.default,
+    });
+  }
 });
 
 Hooks.once('init', function () {
