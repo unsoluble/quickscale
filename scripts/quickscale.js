@@ -15,35 +15,35 @@ const QS_Scale_Down = 0.95;
 const QS_Save_Animation_Path = 'modules/quickscale/assets/spinburst2.webm';
 const QS_Revert_Animation_Path = 'modules/quickscale/assets/boom7.webm';
 
-const defaultSettings = [
-  { id: 'token-random-min', name: '', hint: '', type: Number, default: 0.8 },
-  { id: 'token-random-max', name: '', hint: '', type: Number, default: 1.2 },
-  { id: 'tile-random-min', name: '', hint: '', type: Number, default: 0.9 },
-  { id: 'tile-random-max', name: '', hint: '', type: Number, default: 1.1 },
-  {
-    id: 'token-random-label',
-    name: game.i18n.localize('QSCALE.Token_Random_Range'),
-    hint: '',
-    type: Boolean,
-    default: true,
-  },
-  {
-    id: 'tile-random-label',
-    name: game.i18n.localize('QSCALE.Tile_Random_Range'),
-    hint: '',
-    type: Boolean,
-    default: true,
-  },
-  {
-    id: 'rotation-amount',
-    name: game.i18n.localize('QSCALE.Rotation_Amount'),
-    hint: game.i18n.localize('QSCALE.Rotation_Amount_Hint'),
-    type: Number,
-    default: 15,
-  },
-];
-
 Hooks.on('init', function () {
+  const defaultSettings = [
+    { id: 'token-random-min', name: '', hint: '', type: Number, default: 0.8 },
+    { id: 'token-random-max', name: '', hint: '', type: Number, default: 1.2 },
+    { id: 'tile-random-min', name: '', hint: '', type: Number, default: 0.9 },
+    { id: 'tile-random-max', name: '', hint: '', type: Number, default: 1.1 },
+    {
+      id: 'token-random-label',
+      name: game.i18n.localize('QSCALE.Token_Random_Range'),
+      hint: '',
+      type: Boolean,
+      default: true,
+    },
+    {
+      id: 'tile-random-label',
+      name: game.i18n.localize('QSCALE.Tile_Random_Range'),
+      hint: '',
+      type: Boolean,
+      default: true,
+    },
+    {
+      id: 'rotation-amount',
+      name: game.i18n.localize('QSCALE.Rotation_Amount'),
+      hint: game.i18n.localize('QSCALE.Rotation_Amount_Hint'),
+      type: Number,
+      default: 15,
+    },
+  ];
+
   for (const setting of defaultSettings) {
     game.settings.register('quickscale', setting.id, {
       name: setting.name,
