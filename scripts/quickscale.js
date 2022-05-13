@@ -15,7 +15,7 @@ const QS_Scale_Down = 0.95;
 const QS_Save_Animation_Path = 'modules/quickscale/assets/spinburst2.webm';
 const QS_Revert_Animation_Path = 'modules/quickscale/assets/boom7.webm';
 
-Hooks.on('init', function () {
+async function setDefaultSettings() {
   const defaultSettings = [
     { id: 'token-random-min', name: '', hint: '', type: Number, default: 0.8 },
     { id: 'token-random-max', name: '', hint: '', type: Number, default: 1.2 },
@@ -54,85 +54,110 @@ Hooks.on('init', function () {
       default: setting.default,
     });
   }
-});
+}
 
-Hooks.once('init', function () {
-  // If the DF Hotkeys module is present, set it up to allow for custom keybinds.
-  if (game.modules.get('lib-df-hotkeys')?.active) {
-    Hotkeys.registerGroup({
-      name: 'quickscale.qs-controls',
-      label: game.i18n.localize('QSCALE.DFKEYS.Group_Name'),
-    });
+async function setKeyBindings() {
+  const defaultKeys = [
+    {
+      id: 'scale-down',
+      name: game.i18n.localize('QSCALE.KEYS.Scale_Down'),
+      hint: '',
+      key: 'BracketLeft',
+      mods: [],
+      action: () => updateSize('scale-down', false),
+    },
+    {
+      id: 'scale-up',
+      name: game.i18n.localize('QSCALE.KEYS.Scale_Up'),
+      hint: '',
+      key: 'BracketRight',
+      mods: [],
+      action: () => updateSize('scale-up', false),
+    },
+    {
+      id: 'scale-down-large',
+      name: game.i18n.localize('QSCALE.KEYS.Scale_Down_Large'),
+      hint: game.i18n.localize('QSCALE.KEYS.Large_Step_Hint'),
+      key: 'BracketLeft',
+      mods: ['SHIFT'],
+      action: () => updateSize('scale-down', true),
+    },
+    {
+      id: 'scale-up-large',
+      name: game.i18n.localize('QSCALE.KEYS.Scale_Up_Large'),
+      hint: game.i18n.localize('QSCALE.KEYS.Large_Step_Hint'),
+      key: 'BracketRight',
+      mods: ['SHIFT'],
+      action: () => updateSize('scale-up', true),
+    },
+    {
+      id: 'random-scale',
+      name: game.i18n.localize('QSCALE.KEYS.Random_Scale'),
+      hint: game.i18n.localize('QSCALE.KEYS.Random_Hint'),
+      key: 'BracketLeft',
+      mods: ['SHIFT'],
+      action: () => handleRandomScaleKey(game.canvas.activeLayer.name, 'scale-up'),
+      // this is broken
+    },
+  ];
 
-    Hotkeys.registerShortcut({
-      name: 'quickscale.reduce-key',
-      label: game.i18n.localize('QSCALE.DFKEYS.Reduce'),
-      group: 'quickscale.qs-controls',
-      default: { key: Hotkeys.keys.BracketLeft, alt: false, ctrl: false, shift: false },
-      repeat: true,
-      onKeyDown: (self) => {
-        updateSize(QS_Reduce_Key, false);
-      },
-    });
-
-    Hotkeys.registerShortcut({
-      name: 'quickscale.enlarge-key',
-      label: game.i18n.localize('QSCALE.DFKEYS.Enlarge'),
-      group: 'quickscale.qs-controls',
-      default: { key: Hotkeys.keys.BracketRight, alt: false, ctrl: false, shift: false },
-      repeat: true,
-      onKeyDown: (self) => {
-        updateSize(QS_Enlarge_Key, false);
-      },
-    });
-
-    Hotkeys.registerShortcut({
-      name: 'quickscale.random-scale-key',
-      label: game.i18n.localize('QSCALE.DFKEYS.Random_Scale'),
-      group: 'quickscale.qs-controls',
-      default: { key: Hotkeys.keys.BracketLeft, alt: false, ctrl: false, shift: true },
-      repeat: true,
-      onKeyDown: (self) => {
-        handleRandomScaleKey(game.canvas.activeLayer.name, QS_Random_Scale_Key);
-      },
-    });
-
-    Hotkeys.registerShortcut({
-      name: 'quickscale.random-rotation-key',
-      label: game.i18n.localize('QSCALE.DFKEYS.Random_Rotation'),
-      group: 'quickscale.qs-controls',
-      default: { key: Hotkeys.keys.BracketRight, alt: false, ctrl: false, shift: true },
-      repeat: true,
-      onKeyDown: (self) => {
-        handleRandomRotationKey(game.canvas.activeLayer.name, QS_Random_Rotate_Key);
-      },
-    });
-
-    Hotkeys.registerShortcut({
-      name: 'quickscale.prototype-key',
-      label: game.i18n.localize('QSCALE.DFKEYS.Save_Prototype'),
-      group: 'quickscale.qs-controls',
-      default: { key: Hotkeys.keys.Backslash, alt: false, ctrl: false, shift: true },
-      repeat: true,
-      onKeyDown: (self) => {
-        if (game.canvas.activeLayer.name == 'TokenLayer') updatePrototype();
-      },
-    });
-
-    Hotkeys.registerShortcut({
-      name: 'quickscale.revert-prototype-key',
-      label: game.i18n.localize('QSCALE.DFKEYS.Revert_Prototype'),
-      group: 'quickscale.qs-controls',
-      default: { key: Hotkeys.keys.Backslash, alt: false, ctrl: false, shift: false },
-      repeat: true,
-      onKeyDown: (self) => {
-        if (game.canvas.activeLayer.name == 'TokenLayer') revertPrototype();
+  for (const key of defaultKeys) {
+    game.keybindings.register('quickscale', key.id, {
+      name: key.name,
+      hint: key.hint,
+      editable: [{ key: key.key, modifiers: key.mods }],
+      onDown: () => {
+        key.action();
+        return true;
       },
     });
   }
+}
+
+Hooks.on('init', function () {
+  setDefaultSettings();
+  setKeyBindings();
+});
+
+Hooks.once('init', function () {
+  /*
+  Hotkeys.registerShortcut({
+    name: 'quickscale.random-rotation-key',
+    label: game.i18n.localize('QSCALE.DFKEYS.Random_Rotation'),
+    group: 'quickscale.qs-controls',
+    default: { key: Hotkeys.keys.BracketRight, alt: false, ctrl: false, shift: true },
+    repeat: true,
+    onKeyDown: (self) => {
+      handleRandomRotationKey(game.canvas.activeLayer.name, QS_Random_Rotate_Key);
+    },
+  });
+
+  Hotkeys.registerShortcut({
+    name: 'quickscale.prototype-key',
+    label: game.i18n.localize('QSCALE.DFKEYS.Save_Prototype'),
+    group: 'quickscale.qs-controls',
+    default: { key: Hotkeys.keys.Backslash, alt: false, ctrl: false, shift: true },
+    repeat: true,
+    onKeyDown: (self) => {
+      if (game.canvas.activeLayer.name == 'TokenLayer') updatePrototype();
+    },
+  });
+
+  Hotkeys.registerShortcut({
+    name: 'quickscale.revert-prototype-key',
+    label: game.i18n.localize('QSCALE.DFKEYS.Revert_Prototype'),
+    group: 'quickscale.qs-controls',
+    default: { key: Hotkeys.keys.Backslash, alt: false, ctrl: false, shift: false },
+    repeat: true,
+    onKeyDown: (self) => {
+      if (game.canvas.activeLayer.name == 'TokenLayer') revertPrototype();
+    },
+  });
+  */
 });
 
 Hooks.on('ready', () => {
+  /*
   // Only set up our own key listener if DF Hotkeys isn't handling this.
   if (!game.modules.get('lib-df-hotkeys')?.active) {
     window.addEventListener('keypress', (e) => {
@@ -161,6 +186,7 @@ Hooks.on('ready', () => {
       }
     });
   }
+  */
 });
 
 Hooks.on('renderSettingsConfig', () => {
@@ -246,111 +272,6 @@ Hooks.on('renderSettingsConfig', () => {
   tileSlider.noUiSlider.on('change', saveTileRange);
 });
 
-Hooks.on('renderControlsReference', () => {
-  // Build the custom controls section.
-  // Sometimes different text for Player users.
-  const gmAuth = game.user.role >= CONST.USER_ROLES.ASSISTANT;
-
-  let injection = `
-    <fieldset class="qs-controls-reference">
-      <legend>
-        <span>${game.i18n.localize('QSCALE.REFERENCE.Group_Name')}</span>
-      </legend>
-      <ol class="hotkey-list">
-        <li>
-          <h4>${
-            gmAuth
-              ? game.i18n.localize('QSCALE.REFERENCE.Scale_Elements')
-              : game.i18n.localize('QSCALE.REFERENCE.Scale_Templates')
-          }</h4>
-          <div class="keys">
-            <span class="key">${QS_Reduce_Key}</span>
-            <span class="key">${QS_Enlarge_Key}</span>
-            <span class="qs-subtext">${
-              gmAuth
-                ? '(' +
-                  game.i18n.localize('QSCALE.REFERENCE.Tokens') +
-                  ', ' +
-                  game.i18n.localize('QSCALE.REFERENCE.Templates') +
-                  ', ' +
-                  game.i18n.localize('QSCALE.REFERENCE.Tiles') +
-                  ', ' +
-                  game.i18n.localize('QSCALE.REFERENCE.Lights') +
-                  ', ' +
-                  game.i18n.localize('QSCALE.REFERENCE.Sounds') +
-                  ')'
-                : ''
-            }</span>
-          </div>
-        </li>
-        <li>
-          <h4>${
-            gmAuth
-              ? game.i18n.localize('QSCALE.REFERENCE.Elements_Large')
-              : game.i18n.localize('QSCALE.REFERENCE.Templates_Large')
-          }</h4>
-          <div class="keys">
-            <span class="key">${QS_Random_Scale_Key}</span>
-            <span class="key">${QS_Random_Rotate_Key}</span>
-            <span class="qs-subtext">${
-              gmAuth
-                ? '(' +
-                  game.i18n.localize('QSCALE.REFERENCE.Templates') +
-                  ', ' +
-                  game.i18n.localize('QSCALE.REFERENCE.Lights') +
-                  ', ' +
-                  game.i18n.localize('QSCALE.REFERENCE.Sounds') +
-                  ')'
-                : ''
-            }</span>
-          </div>
-        </li>`;
-
-  if (gmAuth) {
-    injection += `
-        <li class="gm">
-          <h4>${game.i18n.localize('QSCALE.REFERENCE.Save_Prototypes')}</h4>
-          <div class="keys">
-            <span class="key">${QS_Prototype_Key}</span>
-            <span class="qs-subtext">(${game.i18n.localize('QSCALE.REFERENCE.Tokens')})</span>
-          </div>
-        </li>
-        <li class="gm">
-        <h4>${game.i18n.localize('QSCALE.REFERENCE.Revert_Prototypes')}</h4>
-        <div class="keys">
-          <span class="key">${QS_Revert_Prototype_Key}</span>
-          <span class="qs-subtext">(${game.i18n.localize('QSCALE.REFERENCE.Tokens')})</span>
-        </div>
-      </li>
-        <li class="gm">
-          <h4>${game.i18n.localize('QSCALE.REFERENCE.Randomize_Scales')}</h4>
-          <div class="keys">
-            <span class="key">${QS_Random_Scale_Key}</span>
-            <span class="qs-subtext">(${game.i18n.localize(
-              'QSCALE.REFERENCE.Tokens'
-            )}, ${game.i18n.localize('QSCALE.REFERENCE.Tiles')})</span>
-          </div>
-        </li>
-        <li class="gm">
-          <h4>${game.i18n.localize('QSCALE.REFERENCE.Randomize_Rotations')}</h4>
-          <div class="keys">
-            <span class="key">${QS_Random_Rotate_Key}</span>
-            <span class="qs-subtext">(${game.i18n.localize(
-              'QSCALE.REFERENCE.Tokens'
-            )}, ${game.i18n.localize('QSCALE.REFERENCE.Tiles')})</span>
-          </div>
-        </li>`;
-  }
-
-  injection += `</ol></fieldset>`;
-
-  // Insert the controls at the bottom of the window, but only if
-  // DF Hotkeys isn't being used to define custom keys.
-  if (!game.modules.get('lib-df-hotkeys')?.active) {
-    $('#controls-reference > section > div').last().after(injection);
-  }
-});
-
 function handleRandomScaleKey(currentToolLayer, key) {
   switch (currentToolLayer) {
     case 'TokenLayer':
@@ -393,9 +314,9 @@ function saveTileRange(values, handle, unencoded, tap, positions, noUiSlider) {
 }
 
 // Main scaling function.
-async function updateSize(key, largeStep) {
+async function updateSize(action, largeStep) {
   let increase = false;
-  if (key == QS_Enlarge_Key || key == QS_Large_Enlarge_Key) increase = true;
+  if (action == 'scale-up') increase = true;
 
   // Token, tile, light, and sound controls are only for Assistant or higher.
   if (game.user.role >= CONST.USER_ROLES.ASSISTANT) {
@@ -420,53 +341,27 @@ async function updateSize(key, largeStep) {
     // Update hovered light.
     const hoveredLight = canvas.lighting._hover?.document;
     if (hoveredLight) {
-      // Two different data paths for v8 and v9.
-      if (isNewerVersion(game.data.version, '9')) {
-        let currentDim = hoveredLight.data.config.dim;
-        let currentBright = hoveredLight.data.config.bright;
+      let currentDim = hoveredLight.data.config.dim;
+      let currentBright = hoveredLight.data.config.bright;
 
-        let newBright = Math.ceil(currentBright - 5);
-        if (largeStep) {
-          if (Math.ceil(currentDim - 5) > 0 && newBright < 0) {
-            newBright = 0;
-          }
-          await hoveredLight.update({
-            'config.dim': increase ? Math.floor(currentDim + 5) : Math.ceil(currentDim - 5),
-            'config.bright': increase ? Math.floor(currentBright + 5) : newBright,
-          });
-        } else {
-          newBright = Math.ceil(currentBright - 1);
-          if (Math.ceil(currentDim - 1) > 0 && newBright < 0) {
-            newBright = 0;
-          }
-          await hoveredLight.update({
-            'config.dim': increase ? Math.floor(currentDim + 1) : Math.ceil(currentDim - 1),
-            'config.bright': increase ? Math.floor(currentBright + 1) : newBright,
-          });
+      let newBright = Math.ceil(currentBright - 5);
+      if (largeStep) {
+        if (Math.ceil(currentDim - 5) > 0 && newBright < 0) {
+          newBright = 0;
         }
+        await hoveredLight.update({
+          'config.dim': increase ? Math.floor(currentDim + 5) : Math.ceil(currentDim - 5),
+          'config.bright': increase ? Math.floor(currentBright + 5) : newBright,
+        });
       } else {
-        let currentDim = hoveredLight.data.dim;
-        let currentBright = hoveredLight.data.bright;
-
-        let newBright = Math.ceil(currentBright - 5);
-        if (largeStep) {
-          if (Math.ceil(currentDim - 5) > 0 && newBright < 0) {
-            newBright = 0;
-          }
-          await hoveredLight.update({
-            dim: increase ? Math.floor(currentDim + 5) : Math.ceil(currentDim - 5),
-            bright: increase ? Math.floor(currentBright + 5) : newBright,
-          });
-        } else {
-          newBright = Math.ceil(currentBright - 1);
-          if (Math.ceil(currentDim - 1) > 0 && newBright < 0) {
-            newBright = 0;
-          }
-          await hoveredLight.update({
-            dim: increase ? Math.floor(currentDim + 1) : Math.ceil(currentDim - 1),
-            bright: increase ? Math.floor(currentBright + 1) : newBright,
-          });
+        newBright = Math.ceil(currentBright - 1);
+        if (Math.ceil(currentDim - 1) > 0 && newBright < 0) {
+          newBright = 0;
         }
+        await hoveredLight.update({
+          'config.dim': increase ? Math.floor(currentDim + 1) : Math.ceil(currentDim - 1),
+          'config.bright': increase ? Math.floor(currentBright + 1) : newBright,
+        });
       }
     }
 
