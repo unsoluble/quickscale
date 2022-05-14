@@ -12,7 +12,12 @@ Brief video overview here: [https://www.youtube.com/watch?v=SqG9uuHQA2s](https:/
 
 ---
 
-![Controls](doc/Controls.png)
+### Controls
+
+Under Foundry v9 or newer, all keybinds can be configured in the core Configure Controls window. Keys listed below are the defaults.
+
+Under v8, custom keybinds are available with the use of the [Library: DF Hotkeys](https://foundryvtt.com/packages/lib-df-hotkeys) module.
+
 
 ### Tokens & Tiles
 
@@ -44,9 +49,7 @@ There are a few settings you can adjust:
 - _Tile Scale Randomization Range_ sets similar bounds for the tile randomization tool.
 - _Maximum Rotation Amount_ sets the bounds for random rotations — a value of 15 here will allow for random changes between -15° and 15°.
 
-### Controls
 
-The control keys are listed in the **Controls Reference** page found in the Game Settings sidebar. Custom keybinds are available with the use of the [Library: DF Hotkeys](https://foundryvtt.com/packages/lib-df-hotkeys) module.
 
 ### Thanks!
 
