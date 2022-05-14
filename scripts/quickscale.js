@@ -61,17 +61,15 @@ async function setKeyBindings() {
     {
       id: 'scale-down',
       name: game.i18n.localize('QSCALE.KEYS.Scale_Down'),
-      hint: '',
       key: 'BracketLeft',
-      mods: [],
+      order: 1,
       action: () => updateSize('scale-down', false),
     },
     {
       id: 'scale-up',
       name: game.i18n.localize('QSCALE.KEYS.Scale_Up'),
-      hint: '',
       key: 'BracketRight',
-      mods: [],
+      order: 2,
       action: () => updateSize('scale-up', false),
     },
     {
@@ -80,6 +78,7 @@ async function setKeyBindings() {
       hint: game.i18n.localize('QSCALE.KEYS.Large_Step_Hint'),
       key: 'BracketLeft',
       mods: ['SHIFT'],
+      order: 3,
       action: () => updateSize('scale-down', true),
     },
     {
@@ -88,16 +87,50 @@ async function setKeyBindings() {
       hint: game.i18n.localize('QSCALE.KEYS.Large_Step_Hint'),
       key: 'BracketRight',
       mods: ['SHIFT'],
+      order: 4,
       action: () => updateSize('scale-up', true),
     },
     {
       id: 'random-scale',
       name: game.i18n.localize('QSCALE.KEYS.Random_Scale'),
-      hint: game.i18n.localize('QSCALE.KEYS.Random_Hint'),
+      hint: game.i18n.localize('QSCALE.KEYS.Random_Scale_Hint'),
       key: 'BracketLeft',
       mods: ['SHIFT'],
+      precedence: CONST.KEYBINDING_PRECEDENCE.PRIORITY,
+      order: 5,
       action: () => handleRandomScaleKey(game.canvas.activeLayer.name, 'scale-up'),
-      // this is broken
+    },
+    {
+      id: 'random-rotation',
+      name: game.i18n.localize('QSCALE.KEYS.Random_Rotation'),
+      hint: game.i18n.localize('QSCALE.KEYS.Random_Rotation_Hint'),
+      key: 'BracketRight',
+      mods: ['SHIFT'],
+      precedence: CONST.KEYBINDING_PRECEDENCE.PRIORITY,
+      order: 6,
+      action: () => handleRandomRotationKey(game.canvas.activeLayer.name, 'scale-up'),
+    },
+    {
+      id: 'revert-prototype',
+      name: game.i18n.localize('QSCALE.KEYS.Revert_Prototype'),
+      hint: game.i18n.localize('QSCALE.KEYS.Revert_Prototype_Hint'),
+      key: 'Backslash',
+      order: 7,
+      action: () => {
+        if (game.canvas.activeLayer.name == 'TokenLayer') revertPrototype();
+      },
+    },
+    {
+      id: 'update-prototype',
+      name: game.i18n.localize('QSCALE.KEYS.Update_Prototype'),
+      hint: game.i18n.localize('QSCALE.KEYS.Update_Prototype_Hint'),
+      key: 'Backslash',
+      mods: ['SHIFT'],
+      order: 8,
+      restricted: true,
+      action: () => {
+        if (game.canvas.activeLayer.name == 'TokenLayer') updatePrototype();
+      },
     },
   ];
 
@@ -106,6 +139,9 @@ async function setKeyBindings() {
       name: key.name,
       hint: key.hint,
       editable: [{ key: key.key, modifiers: key.mods }],
+      precedence: key.precedence,
+      order: key.order,
+      restricted: key.restricted,
       onDown: () => {
         key.action();
         return true;
@@ -117,76 +153,6 @@ async function setKeyBindings() {
 Hooks.on('init', function () {
   setDefaultSettings();
   setKeyBindings();
-});
-
-Hooks.once('init', function () {
-  /*
-  Hotkeys.registerShortcut({
-    name: 'quickscale.random-rotation-key',
-    label: game.i18n.localize('QSCALE.DFKEYS.Random_Rotation'),
-    group: 'quickscale.qs-controls',
-    default: { key: Hotkeys.keys.BracketRight, alt: false, ctrl: false, shift: true },
-    repeat: true,
-    onKeyDown: (self) => {
-      handleRandomRotationKey(game.canvas.activeLayer.name, QS_Random_Rotate_Key);
-    },
-  });
-
-  Hotkeys.registerShortcut({
-    name: 'quickscale.prototype-key',
-    label: game.i18n.localize('QSCALE.DFKEYS.Save_Prototype'),
-    group: 'quickscale.qs-controls',
-    default: { key: Hotkeys.keys.Backslash, alt: false, ctrl: false, shift: true },
-    repeat: true,
-    onKeyDown: (self) => {
-      if (game.canvas.activeLayer.name == 'TokenLayer') updatePrototype();
-    },
-  });
-
-  Hotkeys.registerShortcut({
-    name: 'quickscale.revert-prototype-key',
-    label: game.i18n.localize('QSCALE.DFKEYS.Revert_Prototype'),
-    group: 'quickscale.qs-controls',
-    default: { key: Hotkeys.keys.Backslash, alt: false, ctrl: false, shift: false },
-    repeat: true,
-    onKeyDown: (self) => {
-      if (game.canvas.activeLayer.name == 'TokenLayer') revertPrototype();
-    },
-  });
-  */
-});
-
-Hooks.on('ready', () => {
-  /*
-  // Only set up our own key listener if DF Hotkeys isn't handling this.
-  if (!game.modules.get('lib-df-hotkeys')?.active) {
-    window.addEventListener('keypress', (e) => {
-      // Don't trigger if we're in a text entry field.
-      if (document.activeElement instanceof HTMLInputElement) return;
-      if (document.activeElement instanceof HTMLTextAreaElement) return;
-      if (document.activeElement.getAttribute('contenteditable') === 'true') return;
-
-      if (e.key == QS_Reduce_Key || e.key == QS_Enlarge_Key) {
-        updateSize(e.key, false);
-      }
-
-      const currentToolLayer = game.canvas.activeLayer.name;
-
-      if (e.key == QS_Random_Scale_Key) {
-        handleRandomScaleKey(currentToolLayer, e.key);
-      }
-      if (e.key == QS_Random_Rotate_Key) {
-        handleRandomRotationKey(currentToolLayer, e.key);
-      }
-      if (e.key == QS_Prototype_Key && currentToolLayer == 'TokenLayer') {
-        updatePrototype();
-      }
-      if (e.key == QS_Revert_Prototype_Key && currentToolLayer == 'TokenLayer') {
-        revertPrototype();
-      }
-    });
-  }
-  */
 });
 
 Hooks.on('renderSettingsConfig', () => {
