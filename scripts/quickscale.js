@@ -1,13 +1,4 @@
-// Keybinds.
-/*const QS_Reduce_Key = '[';
-const QS_Enlarge_Key = ']';
-const QS_Large_Reduce_Key = '{';
-const QS_Large_Enlarge_Key = '}';
-const QS_Random_Scale_Key = '{';
-const QS_Random_Rotate_Key = '}';
-const QS_Prototype_Key = '|';
-const QS_Revert_Prototype_Key = '\\';*/
-
+// Static values for incremental scaling up/down.
 const QS_Scale_Up = 1.05;
 const QS_Scale_Down = 0.95;
 
@@ -24,14 +15,12 @@ async function setDefaultSettings() {
     {
       id: 'token-random-label',
       name: game.i18n.localize('QSCALE.Token_Random_Range'),
-      hint: '',
       type: Boolean,
       default: true,
     },
     {
       id: 'tile-random-label',
       name: game.i18n.localize('QSCALE.Tile_Random_Range'),
-      hint: '',
       type: Boolean,
       default: true,
     },
