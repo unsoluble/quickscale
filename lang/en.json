@@ -16,19 +16,5 @@
   "QSCALE.KEYS.Update_Prototype": "Update Prototype",
   "QSCALE.KEYS.Update_Prototype_Hint": "Save the current scale to the actors' Prototype Tokens",
   "QSCALE.KEYS.Revert_Prototype": "Revert to Prototype",
-  "QSCALE.KEYS.Revert_Prototype_Hint": "Revert to the scale of the actors' Prototype Tokens",
-
-  "QSCALE.REFERENCE.Scale_Elements": "Scale Elements Down or Up",
-  "QSCALE.REFERENCE.Scale_Templates": "Scale Templates Down or Up",
-  "QSCALE.REFERENCE.Elements_Large": "Scale Elements in Large Steps",
-  "QSCALE.REFERENCE.Templates_Large": "Scale Templates in Large Steps",
-  "QSCALE.REFERENCE.Save_Prototypes": "Save Scales to Prototypes",
-  "QSCALE.REFERENCE.Revert_Prototypes": "Revert Scales to Prototypes",
-  "QSCALE.REFERENCE.Randomize_Scales": "Randomize Element Scales",
-  "QSCALE.REFERENCE.Randomize_Rotations": "Randomize Element Rotations",
-  "QSCALE.REFERENCE.Tokens": "Tokens",
-  "QSCALE.REFERENCE.Templates": "Templates",
-  "QSCALE.REFERENCE.Tiles": "Tiles",
-  "QSCALE.REFERENCE.Lights": "Lights",
-  "QSCALE.REFERENCE.Sounds": "Sounds"
+  "QSCALE.KEYS.Revert_Prototype_Hint": "Revert to the scale of the actors' Prototype Tokens"
 }
