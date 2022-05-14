@@ -1,12 +1,12 @@
 // Keybinds.
-const QS_Reduce_Key = '[';
+/*const QS_Reduce_Key = '[';
 const QS_Enlarge_Key = ']';
 const QS_Large_Reduce_Key = '{';
 const QS_Large_Enlarge_Key = '}';
 const QS_Random_Scale_Key = '{';
 const QS_Random_Rotate_Key = '}';
 const QS_Prototype_Key = '|';
-const QS_Revert_Prototype_Key = '\\';
+const QS_Revert_Prototype_Key = '\\';*/
 
 const QS_Scale_Up = 1.05;
 const QS_Scale_Down = 0.95;
@@ -62,14 +62,12 @@ async function setKeyBindings() {
       id: 'scale-down',
       name: game.i18n.localize('QSCALE.KEYS.Scale_Down'),
       key: 'BracketLeft',
-      order: 1,
       action: () => updateSize('scale-down', false),
     },
     {
       id: 'scale-up',
       name: game.i18n.localize('QSCALE.KEYS.Scale_Up'),
       key: 'BracketRight',
-      order: 2,
       action: () => updateSize('scale-up', false),
     },
     {
@@ -78,7 +76,6 @@ async function setKeyBindings() {
       hint: game.i18n.localize('QSCALE.KEYS.Large_Step_Hint'),
       key: 'BracketLeft',
       mods: ['SHIFT'],
-      order: 3,
       action: () => updateSize('scale-down', true),
     },
     {
@@ -87,7 +84,6 @@ async function setKeyBindings() {
       hint: game.i18n.localize('QSCALE.KEYS.Large_Step_Hint'),
       key: 'BracketRight',
       mods: ['SHIFT'],
-      order: 4,
       action: () => updateSize('scale-up', true),
     },
     {
@@ -96,9 +92,9 @@ async function setKeyBindings() {
       hint: game.i18n.localize('QSCALE.KEYS.Random_Scale_Hint'),
       key: 'BracketLeft',
       mods: ['SHIFT'],
+      restricted: true,
       precedence: CONST.KEYBINDING_PRECEDENCE.PRIORITY,
-      order: 5,
-      action: () => handleRandomScaleKey(game.canvas.activeLayer.name, 'scale-up'),
+      action: () => handleRandomScaleKey(game.canvas.activeLayer.name, 'scale-down'),
     },
     {
       id: 'random-rotation',
@@ -106,8 +102,8 @@ async function setKeyBindings() {
       hint: game.i18n.localize('QSCALE.KEYS.Random_Rotation_Hint'),
       key: 'BracketRight',
       mods: ['SHIFT'],
+      restricted: true,
       precedence: CONST.KEYBINDING_PRECEDENCE.PRIORITY,
-      order: 6,
       action: () => handleRandomRotationKey(game.canvas.activeLayer.name, 'scale-up'),
     },
     {
@@ -115,7 +111,7 @@ async function setKeyBindings() {
       name: game.i18n.localize('QSCALE.KEYS.Revert_Prototype'),
       hint: game.i18n.localize('QSCALE.KEYS.Revert_Prototype_Hint'),
       key: 'Backslash',
-      order: 7,
+      restricted: true,
       action: () => {
         if (game.canvas.activeLayer.name == 'TokenLayer') revertPrototype();
       },
@@ -126,7 +122,6 @@ async function setKeyBindings() {
       hint: game.i18n.localize('QSCALE.KEYS.Update_Prototype_Hint'),
       key: 'Backslash',
       mods: ['SHIFT'],
-      order: 8,
       restricted: true,
       action: () => {
         if (game.canvas.activeLayer.name == 'TokenLayer') updatePrototype();
@@ -140,7 +135,6 @@ async function setKeyBindings() {
       hint: key.hint,
       editable: [{ key: key.key, modifiers: key.mods }],
       precedence: key.precedence,
-      order: key.order,
       restricted: key.restricted,
       onDown: () => {
         key.action();
