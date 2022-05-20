@@ -21,7 +21,7 @@ Under v8, custom keybinds are available with the use of the [Library: DF Hotkeys
 
 ### Tokens & Tiles
 
-- `[` and `]` will adjust tokens or tiles incrementally.
+- `[` and `]` will adjust tokens or tiles incrementally. **PF2E Note:** If you have `Link to Actor Size` enabled in a token's configuration, QuickScale will not be able to change that token's scale.
 - Will work with multiple selections.
 - `{` will apply a small amount of random scaling to all controlled tokens or tiles.
 - `}` will apply a small amount of random rotation.
