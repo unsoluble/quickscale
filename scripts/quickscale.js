@@ -270,11 +270,13 @@ async function updateSize(action, largeStep) {
   // Token, tile, light, and sound controls are only for Assistant or higher.
   if (game.user.role >= CONST.USER_ROLES.ASSISTANT) {
     // Update controlled tokens.
-    await canvas.tokens.updateAll(
-      (t) => ({ scale: getNewTokenScale(t.data.scale, increase) }),
-      (t) => t._controlled
-    );
 
+    await canvas.tokens.updateAll(
+      (t) => ({ texture: { scaleX: getNewTokenScale(t.document.texture.scaleX, increase) } }),
+      (t) => ({ texture: { scaleY: getNewTokenScale(t.document.texture.scaleX, increase) } }),
+      (t) => t.controlled
+    );
+    /*
     // Update controlled tiles.
     const controlledTiles =
       canvas.background.controlled.length == 0
@@ -286,7 +288,7 @@ async function updateSize(action, largeStep) {
       height: t.data.height * (increase ? QS_Scale_Up : QS_Scale_Down),
     }));
     await canvas.scene.updateEmbeddedDocuments('Tile', tileUpdates);
-
+*/
     // Update hovered light.
     const hoveredLight = canvas.lighting._hover?.document;
     if (hoveredLight) {
