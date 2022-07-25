@@ -299,10 +299,10 @@ async function updateSize(action, largeStep) {
       // Update hovered light.
       if (game.user.role >= CONST.USER_ROLES.ASSISTANT) {
         // Token, tile, light, and sound controls are only for Assistant or higher.
-        const hoveredLight = canvas.lighting._hover?.document;
+        const hoveredLight = canvas.lighting.hover?.document;
         if (hoveredLight) {
-          let currentDim = hoveredLight.data.config.dim;
-          let currentBright = hoveredLight.data.config.bright;
+          let currentDim = hoveredLight.config.dim;
+          let currentBright = hoveredLight.config.bright;
 
           let newBright = Math.ceil(currentBright - 5);
           if (largeStep) {
