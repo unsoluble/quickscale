@@ -330,9 +330,9 @@ async function updateSize(action, largeStep) {
       // Update hovered sound.
       if (game.user.role >= CONST.USER_ROLES.ASSISTANT) {
         // Token, tile, light, and sound controls are only for Assistant or higher.
-        const hoveredSound = canvas.sounds._hover?.document;
+        const hoveredSound = canvas.sounds.hover?.document;
         if (hoveredSound) {
-          const currentRadius = hoveredSound.data.radius;
+          const currentRadius = hoveredSound.radius;
           if (largeStep) {
             await hoveredSound.update({
               radius: increase
