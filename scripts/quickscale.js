@@ -267,92 +267,108 @@ async function updateSize(action, largeStep) {
   let increase = false;
   if (action == 'scale-up') increase = true;
 
-  // Token, tile, light, and sound controls are only for Assistant or higher.
-  if (game.user.role >= CONST.USER_ROLES.ASSISTANT) {
-    // Update controlled tokens.
-
-    await canvas.tokens.updateAll(
-      (t) => ({ texture: { scaleX: getNewTokenScale(t.document.texture.scaleX, increase) } }),
-      (t) => ({ texture: { scaleY: getNewTokenScale(t.document.texture.scaleX, increase) } }),
-      (t) => t.controlled
-    );
-    /*
-    // Update controlled tiles.
-    const controlledTiles =
-      canvas.background.controlled.length == 0
-        ? canvas.foreground.controlled
-        : canvas.background.controlled;
-    const tileUpdates = controlledTiles.map((t) => ({
-      _id: t.id,
-      width: t.data.width * (increase ? QS_Scale_Up : QS_Scale_Down),
-      height: t.data.height * (increase ? QS_Scale_Up : QS_Scale_Down),
-    }));
-    await canvas.scene.updateEmbeddedDocuments('Tile', tileUpdates);
-*/
-    // Update hovered light.
-    const hoveredLight = canvas.lighting._hover?.document;
-    if (hoveredLight) {
-      let currentDim = hoveredLight.data.config.dim;
-      let currentBright = hoveredLight.data.config.bright;
-
-      let newBright = Math.ceil(currentBright - 5);
-      if (largeStep) {
-        if (Math.ceil(currentDim - 5) > 0 && newBright < 0) {
-          newBright = 0;
-        }
-        await hoveredLight.update({
-          'config.dim': increase ? Math.floor(currentDim + 5) : Math.ceil(currentDim - 5),
-          'config.bright': increase ? Math.floor(currentBright + 5) : newBright,
-        });
-      } else {
-        newBright = Math.ceil(currentBright - 1);
-        if (Math.ceil(currentDim - 1) > 0 && newBright < 0) {
-          newBright = 0;
-        }
-        await hoveredLight.update({
-          'config.dim': increase ? Math.floor(currentDim + 1) : Math.ceil(currentDim - 1),
-          'config.bright': increase ? Math.floor(currentBright + 1) : newBright,
-        });
+  switch (game.canvas.activeLayer.name) {
+    case 'TokenLayer':
+      // Update controlled tokens.
+      if (game.user.role >= CONST.USER_ROLES.ASSISTANT) {
+        // Token, tile, light, and sound controls are only for Assistant or higher.
+        await canvas.tokens.updateAll(
+          (t) => ({ texture: { scaleX: getNewTokenScale(t.document.texture.scaleX, increase) } }),
+          (t) => ({ texture: { scaleY: getNewTokenScale(t.document.texture.scaleX, increase) } }),
+          (t) => t.controlled
+        );
       }
-    }
-
-    // Update hovered sound.
-    const hoveredSound = canvas.sounds._hover?.document;
-    if (hoveredSound) {
-      const currentRadius = hoveredSound.data.radius;
-      if (largeStep) {
-        await hoveredSound.update({
-          radius: increase
-            ? Math.floor(currentRadius + 5)
-            : Math.max(Math.ceil(currentRadius - 5), 1),
-        });
-      } else {
-        await hoveredSound.update({
-          radius: increase
-            ? Math.floor(currentRadius + 1)
-            : Math.max(Math.ceil(currentRadius - 1), 1),
-        });
+      break;
+    case 'TilesLayer':
+      // Update controlled tiles.
+      if (game.user.role >= CONST.USER_ROLES.ASSISTANT) {
+        // Token, tile, light, and sound controls are only for Assistant or higher.
+        const controlledTiles =
+          canvas.background.controlled.length == 0
+            ? canvas.foreground.controlled
+            : canvas.background.controlled;
+        const tileUpdates = controlledTiles.map((t) => ({
+          _id: t.id,
+          width: t.data.width * (increase ? QS_Scale_Up : QS_Scale_Down),
+          height: t.data.height * (increase ? QS_Scale_Up : QS_Scale_Down),
+        }));
+        await canvas.scene.updateEmbeddedDocuments('Tile', tileUpdates);
       }
-    }
-  }
+      break;
+    case 'LightingLayer':
+      // Update hovered light.
+      if (game.user.role >= CONST.USER_ROLES.ASSISTANT) {
+        // Token, tile, light, and sound controls are only for Assistant or higher.
+        const hoveredLight = canvas.lighting._hover?.document;
+        if (hoveredLight) {
+          let currentDim = hoveredLight.data.config.dim;
+          let currentBright = hoveredLight.data.config.bright;
 
-  // Update hovered template. Allowed at the player level.
-  const hoveredTemplate = canvas.templates._hover?.document;
-  if (hoveredTemplate) {
-    const currentDistance = hoveredTemplate.data.distance;
-    if (largeStep) {
-      await hoveredTemplate.update({
-        distance: increase
-          ? Math.floor(currentDistance + 5)
-          : Math.max(Math.ceil(currentDistance - 5), 1),
-      });
-    } else {
-      await hoveredTemplate.update({
-        distance: increase
-          ? Math.floor(currentDistance + 1)
-          : Math.max(Math.ceil(currentDistance - 1), 1),
-      });
-    }
+          let newBright = Math.ceil(currentBright - 5);
+          if (largeStep) {
+            if (Math.ceil(currentDim - 5) > 0 && newBright < 0) {
+              newBright = 0;
+            }
+            await hoveredLight.update({
+              'config.dim': increase ? Math.floor(currentDim + 5) : Math.ceil(currentDim - 5),
+              'config.bright': increase ? Math.floor(currentBright + 5) : newBright,
+            });
+          } else {
+            newBright = Math.ceil(currentBright - 1);
+            if (Math.ceil(currentDim - 1) > 0 && newBright < 0) {
+              newBright = 0;
+            }
+            await hoveredLight.update({
+              'config.dim': increase ? Math.floor(currentDim + 1) : Math.ceil(currentDim - 1),
+              'config.bright': increase ? Math.floor(currentBright + 1) : newBright,
+            });
+          }
+        }
+      }
+      break;
+    case 'SoundsLayer':
+      // Update hovered sound.
+      if (game.user.role >= CONST.USER_ROLES.ASSISTANT) {
+        // Token, tile, light, and sound controls are only for Assistant or higher.
+        const hoveredSound = canvas.sounds._hover?.document;
+        if (hoveredSound) {
+          const currentRadius = hoveredSound.data.radius;
+          if (largeStep) {
+            await hoveredSound.update({
+              radius: increase
+                ? Math.floor(currentRadius + 5)
+                : Math.max(Math.ceil(currentRadius - 5), 1),
+            });
+          } else {
+            await hoveredSound.update({
+              radius: increase
+                ? Math.floor(currentRadius + 1)
+                : Math.max(Math.ceil(currentRadius - 1), 1),
+            });
+          }
+        }
+      }
+      break;
+    case 'TemplateLayer':
+      // Update hovered template. Allowed at the player level.
+      const hoveredTemplate = canvas.templates.hover?.document;
+      if (hoveredTemplate) {
+        const currentDistance = hoveredTemplate.distance;
+        if (largeStep) {
+          await hoveredTemplate.update({
+            distance: increase
+              ? Math.floor(currentDistance + 5)
+              : Math.max(Math.ceil(currentDistance - 5), 1),
+          });
+        } else {
+          await hoveredTemplate.update({
+            distance: increase
+              ? Math.floor(currentDistance + 1)
+              : Math.max(Math.ceil(currentDistance - 1), 1),
+          });
+        }
+      }
+      break;
   }
 }
 
