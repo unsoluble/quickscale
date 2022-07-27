@@ -468,22 +468,18 @@ async function randomizeRotation() {
   // Update controlled tokens. Check for rotation lock, don't rotate if true.
   await canvas.tokens.updateAll(
     (t) => ({
-      rotation: t.data.lockRotation
-        ? t.data.rotation
-        : Math.round(t.data.rotation + getRandomArbitrary(0 - rotation, rotation)),
+      rotation: t.document.lockRotation
+        ? t.document.rotation
+        : Math.round(t.document.rotation + getRandomArbitrary(0 - rotation, rotation)),
     }),
-    (t) => t._controlled
+    (t) => t.controlled
   );
 
   // Update controlled tiles.
-  const controlledTiles =
-    canvas.background.controlled.length == 0
-      ? canvas.foreground.controlled
-      : canvas.background.controlled;
-  const tileUpdates = controlledTiles.map((t) => {
+  const tileUpdates = canvas.tiles.controlled.map((t) => {
     return {
       _id: t.id,
-      rotation: Math.round(t.data.rotation + getRandomArbitrary(0 - rotation, rotation)),
+      rotation: Math.round(t.document.rotation + getRandomArbitrary(0 - rotation, rotation)),
     };
   });
   await canvas.scene.updateEmbeddedDocuments('Tile', tileUpdates);
