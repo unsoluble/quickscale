@@ -529,8 +529,9 @@ async function createAnimation(save, tokenID) {
   animation.position.y = (canvas.grid.h * token.document.height) / 2;
   animation.visible = true;
   const source = getProperty(animation._texture, 'baseTexture.resource.source');
-  source.loop = false;
-  game.video.play(source);
+  //source.loop = false;
+  //source.offset = 0;
+  game.video.play(source, { loop: false, offset: 0 });
   setTimeout(
     () => {
       token.removeChild(sprite);
