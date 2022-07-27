@@ -267,43 +267,44 @@ async function updateSize(action, largeStep) {
   let increase = false;
   if (action == 'scale-up') increase = true;
 
+  // Token, tile, light, and sound controls are only for Assistant or higher.
+  const authorized = game.user.role >= CONST.USER_ROLES.ASSISTANT;
+
   switch (game.canvas.activeLayer.name) {
     case 'TokenLayer':
       // Update controlled tokens.
-      if (game.user.role >= CONST.USER_ROLES.ASSISTANT) {
-        // Token, tile, light, and sound controls are only for Assistant or higher.
+      if (authorized) {
         await canvas.tokens.updateAll(
-          (t) => ({ texture: { scaleX: getNewTokenScale(t.document.texture.scaleX, increase) } }),
-          (t) => ({ texture: { scaleY: getNewTokenScale(t.document.texture.scaleX, increase) } }),
-          (t) => t.controlled
+          (t) => ({
+            texture: {
+              scaleX: getNewTokenScale(t.document.texture.scaleX, increase),
+              scaleY: getNewTokenScale(t.document.texture.scaleX, increase),
+            },
+          }),
+          (t) => t.controlled,
+          { animate: false }
         );
       }
       break;
     case 'TilesLayer':
       // Update controlled tiles.
-      if (game.user.role >= CONST.USER_ROLES.ASSISTANT) {
-        // Token, tile, light, and sound controls are only for Assistant or higher.
-        const controlledTiles =
-          canvas.background.controlled.length == 0
-            ? canvas.foreground.controlled
-            : canvas.background.controlled;
+      if (authorized) {
+        const controlledTiles = canvas.tiles.controlled;
         const tileUpdates = controlledTiles.map((t) => ({
           _id: t.id,
-          width: t.data.width * (increase ? QS_Scale_Up : QS_Scale_Down),
-          height: t.data.height * (increase ? QS_Scale_Up : QS_Scale_Down),
+          width: t.document.width * (increase ? QS_Scale_Up : QS_Scale_Down),
+          height: t.document.height * (increase ? QS_Scale_Up : QS_Scale_Down),
         }));
         await canvas.scene.updateEmbeddedDocuments('Tile', tileUpdates);
       }
       break;
     case 'LightingLayer':
       // Update hovered light.
-      if (game.user.role >= CONST.USER_ROLES.ASSISTANT) {
-        // Token, tile, light, and sound controls are only for Assistant or higher.
+      if (authorized) {
         const hoveredLight = canvas.lighting.hover?.document;
         if (hoveredLight) {
           let currentDim = hoveredLight.config.dim;
           let currentBright = hoveredLight.config.bright;
-
           let newBright = Math.ceil(currentBright - 5);
           if (largeStep) {
             if (Math.ceil(currentDim - 5) > 0 && newBright < 0) {
@@ -328,8 +329,7 @@ async function updateSize(action, largeStep) {
       break;
     case 'SoundsLayer':
       // Update hovered sound.
-      if (game.user.role >= CONST.USER_ROLES.ASSISTANT) {
-        // Token, tile, light, and sound controls are only for Assistant or higher.
+      if (authorized) {
         const hoveredSound = canvas.sounds.hover?.document;
         if (hoveredSound) {
           const currentRadius = hoveredSound.radius;
@@ -379,22 +379,23 @@ async function updatePrototype() {
 
   const controlledTokens = canvas.tokens.controlled.map((t) => {
     return {
-      actorID: t.data.actorId,
-      scale: t.data.scale,
+      actorID: t.document.actorId,
+      scaleX: t.document.texture.scaleX,
+      scaleX: t.document.texture.scaleY,
     };
   });
 
   // Update the base actor data with the instanced tokens' current scales.
   const actorUpdates = controlledTokens.map((entry) => ({
     _id: entry.actorID,
-    'token.scale': entry.scale,
+    'prototypeToken.texture.scaleX': entry.scaleX,
+    'prototypeToken.texture.scaleY': entry.scaleY,
   }));
   Actor.updateDocuments(actorUpdates);
 
   // Fire off an animation for visual feedback.
-  const tokens = canvas.tokens.placeables.filter((t) => t._controlled);
-  for (let t of tokens) {
-    await createAnimation(true, t.data._id);
+  for (let t of canvas.tokens.controlled) {
+    await createAnimation(true, t.document._id);
   }
 }
 
@@ -405,14 +406,14 @@ async function revertPrototype() {
 
   // Update controlled tokens.
   await canvas.tokens.updateAll(
-    (t) => ({ scale: t.document._actor.data.token.scale }),
-    (t) => t._controlled
+    (t) => ({ texture: { scaleX: t.document._actor.prototypeToken.texture.scaleX } }),
+    (t) => ({ texture: { scaleY: t.document._actor.prototypeToken.texture.scaleX } }),
+    (t) => t.controlled
   );
 
   // Fire off an animation for visual feedback.
-  const tokens = canvas.tokens.placeables.filter((t) => t._controlled);
-  for (let t of tokens) {
-    await createAnimation(false, t.data._id);
+  for (let t of canvas.tokens.controlled) {
+    await createAnimation(false, t.document._id);
   }
 }
 
@@ -422,37 +423,37 @@ async function randomizeScale() {
   if (game.user.role < CONST.USER_ROLES.ASSISTANT) return;
 
   // Randomize token scales.
-  const tokenUpdates = canvas.tokens.controlled.map((t) => ({
-    _id: t.id,
-    scale:
+  if (canvas.tokens.controlled.length > 0) {
+    const newScale =
       Math.round(
         getRandomArbitrary(
           game.settings.get('quickscale', 'token-random-min'),
           game.settings.get('quickscale', 'token-random-max')
         ) * 10
-      ) / 10, // Extra math here is for decimal truncation.
-  }));
-  if (canvas.tokens.controlled.length > 0) {
+      ) / 10; // Extra math here is for decimal truncation.
+    const tokenUpdates = canvas.tokens.controlled.map((t) => ({
+      _id: t.id,
+      scaleX: newScale,
+      scaleY: newScale,
+    }));
+
     await canvas.scene.updateEmbeddedDocuments('Token', tokenUpdates);
   }
 
   // Randomize tile scales.
-  const controlledTiles =
-    canvas.background.controlled.length == 0
-      ? canvas.foreground.controlled
-      : canvas.background.controlled;
-  const tileUpdates = controlledTiles.map((t) => {
-    const randomTileScale = getRandomArbitrary(
-      game.settings.get('quickscale', 'tile-random-min'),
-      game.settings.get('quickscale', 'tile-random-max')
-    );
-    return {
-      _id: t.id,
-      width: Math.round(t.data.width * randomTileScale),
-      height: Math.round(t.data.height * randomTileScale),
-    };
-  });
-  if (controlledTiles.length > 0) {
+  if (canvas.tiles.controlled.length > 0) {
+    const tileUpdates = canvas.tiles.controlled.map((t) => {
+      const randomTileScale = getRandomArbitrary(
+        game.settings.get('quickscale', 'tile-random-min'),
+        game.settings.get('quickscale', 'tile-random-max')
+      );
+      return {
+        _id: t.id,
+        width: Math.round(t.document.width * randomTileScale),
+        height: Math.round(t.document.height * randomTileScale),
+      };
+    });
+
     await canvas.scene.updateEmbeddedDocuments('Tile', tileUpdates);
   }
 }
@@ -520,8 +521,8 @@ async function createAnimation(save, tokenID) {
   let sprite = new PIXI.Sprite(animationTexture);
   sprite.anchor.set(0.5);
   let animation = token.addChild(sprite);
-  animation.position.x = (canvas.grid.w * token.data.width) / 2;
-  animation.position.y = (canvas.grid.h * token.data.height) / 2;
+  animation.position.x = (canvas.grid.w * token.document.width) / 2;
+  animation.position.y = (canvas.grid.h * token.document.height) / 2;
   animation.visible = true;
   const source = getProperty(animation._texture, 'baseTexture.resource.source');
   source.loop = false;
@@ -530,6 +531,6 @@ async function createAnimation(save, tokenID) {
     () => {
       token.removeChild(sprite);
     },
-    save ? 1200 : 2200
+    save ? 1200 : 1800
   );
 }
