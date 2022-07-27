@@ -406,8 +406,12 @@ async function revertPrototype() {
 
   // Update controlled tokens.
   await canvas.tokens.updateAll(
-    (t) => ({ texture: { scaleX: t.document._actor.prototypeToken.texture.scaleX } }),
-    (t) => ({ texture: { scaleY: t.document._actor.prototypeToken.texture.scaleX } }),
+    (t) => ({
+      texture: {
+        scaleX: t.document._actor.prototypeToken.texture.scaleX,
+        scaleY: t.document._actor.prototypeToken.texture.scaleY,
+      },
+    }),
     (t) => t.controlled
   );
 
@@ -431,13 +435,17 @@ async function randomizeScale() {
           game.settings.get('quickscale', 'token-random-max')
         ) * 10
       ) / 10; // Extra math here is for decimal truncation.
-    const tokenUpdates = canvas.tokens.controlled.map((t) => ({
-      _id: t.id,
-      scaleX: newScale,
-      scaleY: newScale,
-    }));
 
-    await canvas.scene.updateEmbeddedDocuments('Token', tokenUpdates);
+    await canvas.tokens.updateAll(
+      (t) => ({
+        texture: {
+          scaleX: newScale,
+          scaleY: newScale,
+        },
+      }),
+      (t) => t.controlled,
+      { animate: false }
+    );
   }
 
   // Randomize tile scales.
@@ -478,7 +486,7 @@ async function randomizeRotation() {
   // Update controlled tiles.
   const tileUpdates = canvas.tiles.controlled.map((t) => {
     return {
-      _id: t.id,
+      _id: t._id,
       rotation: Math.round(t.document.rotation + getRandomArbitrary(0 - rotation, rotation)),
     };
   });
