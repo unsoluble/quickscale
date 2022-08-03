@@ -224,8 +224,7 @@ Hooks.on('renderSettingsConfig', () => {
 function handleRandomScaleKey(currentToolLayer, key) {
   switch (currentToolLayer) {
     case 'TokenLayer':
-    case 'BackgroundLayer':
-    case 'ForegroundLayer':
+    case 'TilesLayer':
       randomizeScale();
       break;
     case 'TemplateLayer':
@@ -239,8 +238,7 @@ function handleRandomScaleKey(currentToolLayer, key) {
 function handleRandomRotationKey(currentToolLayer, key) {
   switch (currentToolLayer) {
     case 'TokenLayer':
-    case 'BackgroundLayer':
-    case 'ForegroundLayer':
+    case 'TilesLayer':
       randomizeRotation();
       break;
     case 'TemplateLayer':
@@ -486,7 +484,7 @@ async function randomizeRotation() {
   // Update controlled tiles.
   const tileUpdates = canvas.tiles.controlled.map((t) => {
     return {
-      _id: t._id,
+      _id: t.id,
       rotation: Math.round(t.document.rotation + getRandomArbitrary(0 - rotation, rotation)),
     };
   });
