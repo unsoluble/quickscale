@@ -224,8 +224,7 @@ Hooks.on('renderSettingsConfig', () => {
 function handleRandomScaleKey(currentToolLayer, key) {
   switch (currentToolLayer) {
     case 'TokenLayer':
-    case 'BackgroundLayer':
-    case 'ForegroundLayer':
+    case 'TilesLayer':
       randomizeScale();
       break;
     case 'TemplateLayer':
@@ -239,8 +238,7 @@ function handleRandomScaleKey(currentToolLayer, key) {
 function handleRandomRotationKey(currentToolLayer, key) {
   switch (currentToolLayer) {
     case 'TokenLayer':
-    case 'BackgroundLayer':
-    case 'ForegroundLayer':
+    case 'TilesLayer':
       randomizeRotation();
       break;
     case 'TemplateLayer':
@@ -268,89 +266,107 @@ async function updateSize(action, largeStep) {
   if (action == 'scale-up') increase = true;
 
   // Token, tile, light, and sound controls are only for Assistant or higher.
-  if (game.user.role >= CONST.USER_ROLES.ASSISTANT) {
-    // Update controlled tokens.
-    await canvas.tokens.updateAll(
-      (t) => ({ scale: getNewTokenScale(t.data.scale, increase) }),
-      (t) => t._controlled
-    );
+  const authorized = game.user.role >= CONST.USER_ROLES.ASSISTANT;
 
-    // Update controlled tiles.
-    const controlledTiles =
-      canvas.background.controlled.length == 0
-        ? canvas.foreground.controlled
-        : canvas.background.controlled;
-    const tileUpdates = controlledTiles.map((t) => ({
-      _id: t.id,
-      width: t.data.width * (increase ? QS_Scale_Up : QS_Scale_Down),
-      height: t.data.height * (increase ? QS_Scale_Up : QS_Scale_Down),
-    }));
-    await canvas.scene.updateEmbeddedDocuments('Tile', tileUpdates);
-
-    // Update hovered light.
-    const hoveredLight = canvas.lighting._hover?.document;
-    if (hoveredLight) {
-      let currentDim = hoveredLight.data.config.dim;
-      let currentBright = hoveredLight.data.config.bright;
-
-      let newBright = Math.ceil(currentBright - 5);
-      if (largeStep) {
-        if (Math.ceil(currentDim - 5) > 0 && newBright < 0) {
-          newBright = 0;
-        }
-        await hoveredLight.update({
-          'config.dim': increase ? Math.floor(currentDim + 5) : Math.ceil(currentDim - 5),
-          'config.bright': increase ? Math.floor(currentBright + 5) : newBright,
-        });
-      } else {
-        newBright = Math.ceil(currentBright - 1);
-        if (Math.ceil(currentDim - 1) > 0 && newBright < 0) {
-          newBright = 0;
-        }
-        await hoveredLight.update({
-          'config.dim': increase ? Math.floor(currentDim + 1) : Math.ceil(currentDim - 1),
-          'config.bright': increase ? Math.floor(currentBright + 1) : newBright,
-        });
+  switch (game.canvas.activeLayer.name) {
+    case 'TokenLayer':
+      // Update controlled tokens.
+      if (authorized) {
+        await canvas.tokens.updateAll(
+          (t) => ({
+            texture: {
+              scaleX: getNewTokenScale(t.document.texture.scaleX, increase),
+              scaleY: getNewTokenScale(t.document.texture.scaleX, increase),
+            },
+          }),
+          (t) => t.controlled,
+          { animate: false }
+        );
       }
-    }
-
-    // Update hovered sound.
-    const hoveredSound = canvas.sounds._hover?.document;
-    if (hoveredSound) {
-      const currentRadius = hoveredSound.data.radius;
-      if (largeStep) {
-        await hoveredSound.update({
-          radius: increase
-            ? Math.floor(currentRadius + 5)
-            : Math.max(Math.ceil(currentRadius - 5), 1),
-        });
-      } else {
-        await hoveredSound.update({
-          radius: increase
-            ? Math.floor(currentRadius + 1)
-            : Math.max(Math.ceil(currentRadius - 1), 1),
-        });
+      break;
+    case 'TilesLayer':
+      // Update controlled tiles.
+      if (authorized) {
+        const controlledTiles = canvas.tiles.controlled;
+        const tileUpdates = controlledTiles.map((t) => ({
+          _id: t.id,
+          width: t.document.width * (increase ? QS_Scale_Up : QS_Scale_Down),
+          height: t.document.height * (increase ? QS_Scale_Up : QS_Scale_Down),
+        }));
+        await canvas.scene.updateEmbeddedDocuments('Tile', tileUpdates);
       }
-    }
-  }
-
-  // Update hovered template. Allowed at the player level.
-  const hoveredTemplate = canvas.templates._hover?.document;
-  if (hoveredTemplate) {
-    const currentDistance = hoveredTemplate.data.distance;
-    if (largeStep) {
-      await hoveredTemplate.update({
-        distance: increase
-          ? Math.floor(currentDistance + 5)
-          : Math.max(Math.ceil(currentDistance - 5), 1),
-      });
-    } else {
-      await hoveredTemplate.update({
-        distance: increase
-          ? Math.floor(currentDistance + 1)
-          : Math.max(Math.ceil(currentDistance - 1), 1),
-      });
-    }
+      break;
+    case 'LightingLayer':
+      // Update hovered light.
+      if (authorized) {
+        const hoveredLight = canvas.lighting.hover?.document;
+        if (hoveredLight) {
+          let currentDim = hoveredLight.config.dim;
+          let currentBright = hoveredLight.config.bright;
+          let newBright = Math.ceil(currentBright - 5);
+          if (largeStep) {
+            if (Math.ceil(currentDim - 5) > 0 && newBright < 0) {
+              newBright = 0;
+            }
+            await hoveredLight.update({
+              'config.dim': increase ? Math.floor(currentDim + 5) : Math.ceil(currentDim - 5),
+              'config.bright': increase ? Math.floor(currentBright + 5) : newBright,
+            });
+          } else {
+            newBright = Math.ceil(currentBright - 1);
+            if (Math.ceil(currentDim - 1) > 0 && newBright < 0) {
+              newBright = 0;
+            }
+            await hoveredLight.update({
+              'config.dim': increase ? Math.floor(currentDim + 1) : Math.ceil(currentDim - 1),
+              'config.bright': increase ? Math.floor(currentBright + 1) : newBright,
+            });
+          }
+        }
+      }
+      break;
+    case 'SoundsLayer':
+      // Update hovered sound.
+      if (authorized) {
+        const hoveredSound = canvas.sounds.hover?.document;
+        if (hoveredSound) {
+          const currentRadius = hoveredSound.radius;
+          if (largeStep) {
+            await hoveredSound.update({
+              radius: increase
+                ? Math.floor(currentRadius + 5)
+                : Math.max(Math.ceil(currentRadius - 5), 1),
+            });
+          } else {
+            await hoveredSound.update({
+              radius: increase
+                ? Math.floor(currentRadius + 1)
+                : Math.max(Math.ceil(currentRadius - 1), 1),
+            });
+          }
+        }
+      }
+      break;
+    case 'TemplateLayer':
+      // Update hovered template. Allowed at the player level.
+      const hoveredTemplate = canvas.templates.hover?.document;
+      if (hoveredTemplate) {
+        const currentDistance = hoveredTemplate.distance;
+        if (largeStep) {
+          await hoveredTemplate.update({
+            distance: increase
+              ? Math.floor(currentDistance + 5)
+              : Math.max(Math.ceil(currentDistance - 5), 1),
+          });
+        } else {
+          await hoveredTemplate.update({
+            distance: increase
+              ? Math.floor(currentDistance + 1)
+              : Math.max(Math.ceil(currentDistance - 1), 1),
+          });
+        }
+      }
+      break;
   }
 }
 
@@ -361,22 +377,23 @@ async function updatePrototype() {
 
   const controlledTokens = canvas.tokens.controlled.map((t) => {
     return {
-      actorID: t.data.actorId,
-      scale: t.data.scale,
+      actorID: t.document.actorId,
+      scaleX: t.document.texture.scaleX,
+      scaleX: t.document.texture.scaleY,
     };
   });
 
   // Update the base actor data with the instanced tokens' current scales.
   const actorUpdates = controlledTokens.map((entry) => ({
     _id: entry.actorID,
-    'token.scale': entry.scale,
+    'prototypeToken.texture.scaleX': entry.scaleX,
+    'prototypeToken.texture.scaleY': entry.scaleY,
   }));
   Actor.updateDocuments(actorUpdates);
 
   // Fire off an animation for visual feedback.
-  const tokens = canvas.tokens.placeables.filter((t) => t._controlled);
-  for (let t of tokens) {
-    await createAnimation(true, t.data._id);
+  for (let t of canvas.tokens.controlled) {
+    await createAnimation(true, t.document._id);
   }
 }
 
@@ -387,14 +404,18 @@ async function revertPrototype() {
 
   // Update controlled tokens.
   await canvas.tokens.updateAll(
-    (t) => ({ scale: t.document._actor.data.token.scale }),
-    (t) => t._controlled
+    (t) => ({
+      texture: {
+        scaleX: t.document._actor.prototypeToken.texture.scaleX,
+        scaleY: t.document._actor.prototypeToken.texture.scaleY,
+      },
+    }),
+    (t) => t.controlled
   );
 
   // Fire off an animation for visual feedback.
-  const tokens = canvas.tokens.placeables.filter((t) => t._controlled);
-  for (let t of tokens) {
-    await createAnimation(false, t.data._id);
+  for (let t of canvas.tokens.controlled) {
+    await createAnimation(false, t.document._id);
   }
 }
 
@@ -404,37 +425,41 @@ async function randomizeScale() {
   if (game.user.role < CONST.USER_ROLES.ASSISTANT) return;
 
   // Randomize token scales.
-  const tokenUpdates = canvas.tokens.controlled.map((t) => ({
-    _id: t.id,
-    scale:
+  if (canvas.tokens.controlled.length > 0) {
+    const newScale =
       Math.round(
         getRandomArbitrary(
           game.settings.get('quickscale', 'token-random-min'),
           game.settings.get('quickscale', 'token-random-max')
         ) * 10
-      ) / 10, // Extra math here is for decimal truncation.
-  }));
-  if (canvas.tokens.controlled.length > 0) {
-    await canvas.scene.updateEmbeddedDocuments('Token', tokenUpdates);
+      ) / 10; // Extra math here is for decimal truncation.
+
+    await canvas.tokens.updateAll(
+      (t) => ({
+        texture: {
+          scaleX: newScale,
+          scaleY: newScale,
+        },
+      }),
+      (t) => t.controlled,
+      { animate: false }
+    );
   }
 
   // Randomize tile scales.
-  const controlledTiles =
-    canvas.background.controlled.length == 0
-      ? canvas.foreground.controlled
-      : canvas.background.controlled;
-  const tileUpdates = controlledTiles.map((t) => {
-    const randomTileScale = getRandomArbitrary(
-      game.settings.get('quickscale', 'tile-random-min'),
-      game.settings.get('quickscale', 'tile-random-max')
-    );
-    return {
-      _id: t.id,
-      width: Math.round(t.data.width * randomTileScale),
-      height: Math.round(t.data.height * randomTileScale),
-    };
-  });
-  if (controlledTiles.length > 0) {
+  if (canvas.tiles.controlled.length > 0) {
+    const tileUpdates = canvas.tiles.controlled.map((t) => {
+      const randomTileScale = getRandomArbitrary(
+        game.settings.get('quickscale', 'tile-random-min'),
+        game.settings.get('quickscale', 'tile-random-max')
+      );
+      return {
+        _id: t.id,
+        width: Math.round(t.document.width * randomTileScale),
+        height: Math.round(t.document.height * randomTileScale),
+      };
+    });
+
     await canvas.scene.updateEmbeddedDocuments('Tile', tileUpdates);
   }
 }
@@ -449,22 +474,18 @@ async function randomizeRotation() {
   // Update controlled tokens. Check for rotation lock, don't rotate if true.
   await canvas.tokens.updateAll(
     (t) => ({
-      rotation: t.data.lockRotation
-        ? t.data.rotation
-        : Math.round(t.data.rotation + getRandomArbitrary(0 - rotation, rotation)),
+      rotation: t.document.lockRotation
+        ? t.document.rotation
+        : Math.round(t.document.rotation + getRandomArbitrary(0 - rotation, rotation)),
     }),
-    (t) => t._controlled
+    (t) => t.controlled
   );
 
   // Update controlled tiles.
-  const controlledTiles =
-    canvas.background.controlled.length == 0
-      ? canvas.foreground.controlled
-      : canvas.background.controlled;
-  const tileUpdates = controlledTiles.map((t) => {
+  const tileUpdates = canvas.tiles.controlled.map((t) => {
     return {
       _id: t.id,
-      rotation: Math.round(t.data.rotation + getRandomArbitrary(0 - rotation, rotation)),
+      rotation: Math.round(t.document.rotation + getRandomArbitrary(0 - rotation, rotation)),
     };
   });
   await canvas.scene.updateEmbeddedDocuments('Tile', tileUpdates);
@@ -502,16 +523,17 @@ async function createAnimation(save, tokenID) {
   let sprite = new PIXI.Sprite(animationTexture);
   sprite.anchor.set(0.5);
   let animation = token.addChild(sprite);
-  animation.position.x = (canvas.grid.w * token.data.width) / 2;
-  animation.position.y = (canvas.grid.h * token.data.height) / 2;
+  animation.position.x = (canvas.grid.w * token.document.width) / 2;
+  animation.position.y = (canvas.grid.h * token.document.height) / 2;
   animation.visible = true;
   const source = getProperty(animation._texture, 'baseTexture.resource.source');
-  source.loop = false;
-  game.video.play(source);
+  //source.loop = false;
+  //source.offset = 0;
+  game.video.play(source, { loop: false, offset: 0 });
   setTimeout(
     () => {
       token.removeChild(sprite);
     },
-    save ? 1200 : 2200
+    save ? 1200 : 1800
   );
 }
