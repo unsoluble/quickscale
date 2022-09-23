@@ -379,7 +379,7 @@ async function updatePrototype() {
     return {
       actorID: t.document.actorId,
       scaleX: t.document.texture.scaleX,
-      scaleX: t.document.texture.scaleY,
+      scaleY: t.document.texture.scaleY,
     };
   });
 
