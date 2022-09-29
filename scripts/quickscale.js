@@ -303,23 +303,23 @@ async function updateSize(action, largeStep) {
         if (hoveredLight) {
           let currentDim = hoveredLight.config.dim;
           let currentBright = hoveredLight.config.bright;
-          let newBright = Math.ceil(currentBright - 5);
           if (largeStep) {
-            if (Math.ceil(currentDim - 5) > 0 && newBright < 0) {
-              newBright = 0;
-            }
             await hoveredLight.update({
-              'config.dim': increase ? Math.floor(currentDim + 5) : Math.ceil(currentDim - 5),
-              'config.bright': increase ? Math.floor(currentBright + 5) : newBright,
+              'config.dim': increase
+                ? Math.floor(currentDim + 5)
+                : Math.max(Math.ceil(currentDim - 5), 0),
+              'config.bright': increase
+                ? Math.floor(currentBright + 5)
+                : Math.max(Math.ceil(currentBright - 5), 0),
             });
           } else {
-            newBright = Math.ceil(currentBright - 1);
-            if (Math.ceil(currentDim - 1) > 0 && newBright < 0) {
-              newBright = 0;
-            }
             await hoveredLight.update({
-              'config.dim': increase ? Math.floor(currentDim + 1) : Math.ceil(currentDim - 1),
-              'config.bright': increase ? Math.floor(currentBright + 1) : newBright,
+              'config.dim': increase
+                ? Math.floor(currentDim + 1)
+                : Math.max(Math.ceil(currentDim - 1), 0),
+              'config.bright': increase
+                ? Math.floor(currentBright + 1)
+                : Math.max(Math.ceil(currentBright - 1), 0),
             });
           }
         }
@@ -335,13 +335,13 @@ async function updateSize(action, largeStep) {
             await hoveredSound.update({
               radius: increase
                 ? Math.floor(currentRadius + 5)
-                : Math.max(Math.ceil(currentRadius - 5), 1),
+                : Math.max(Math.ceil(currentRadius - 5), 0),
             });
           } else {
             await hoveredSound.update({
               radius: increase
                 ? Math.floor(currentRadius + 1)
-                : Math.max(Math.ceil(currentRadius - 1), 1),
+                : Math.max(Math.ceil(currentRadius - 1), 0),
             });
           }
         }
