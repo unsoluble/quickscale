@@ -26,8 +26,9 @@ Under v8, custom keybinds are available with the use of the [Library: DF Hotkeys
 - `Shift + [` will apply a small amount of random scaling to all controlled tokens or tiles.
 - `Shift + ]` will apply a small amount of random rotation.]
 - If one or more tokens are controlled, `Shift + \` will save the tokens' current scale to their actors' Prototype Token config.
-– `Alt + [` will nudge the token art down relative to the grid square (useful for isometric-style artwork).
-– `Alt + ]` will nudge up.
+- `Alt + [` will nudge the token art down relative to the grid square (useful for isometric-style artwork).
+- `Alt + ]` will nudge up.
+
 - `Alt + Shift + [` will nudge down in larger steps.
 - `Alt + Shift + ]` nudges up in large steps.
 - `Alt + \` will reset the nudged offset to zero.
