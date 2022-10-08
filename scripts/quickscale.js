@@ -76,6 +76,46 @@ async function setKeyBindings() {
       action: () => updateSize('scale-up', true),
     },
     {
+      id: 'offset-down',
+      name: game.i18n.localize('QSCALE.KEYS.Offset_Down'),
+      key: 'BracketLeft',
+      mods: ['ALT'],
+      restricted: true,
+      action: () => updateOffset('offset-down', false),
+    },
+    {
+      id: 'offset-up',
+      name: game.i18n.localize('QSCALE.KEYS.Offset_Up'),
+      key: 'BracketRight',
+      mods: ['ALT'],
+      restricted: true,
+      action: () => updateOffset('offset-up', false),
+    },
+    {
+      id: 'offset-down-large',
+      name: game.i18n.localize('QSCALE.KEYS.Offset_Down_Large'),
+      key: 'BracketLeft',
+      mods: ['ALT', 'SHIFT'],
+      restricted: true,
+      action: () => updateOffset('offset-down', true),
+    },
+    {
+      id: 'offset-up-large',
+      name: game.i18n.localize('QSCALE.KEYS.Offset_Up_Large'),
+      key: 'BracketRight',
+      mods: ['ALT', 'SHIFT'],
+      restricted: true,
+      action: () => updateOffset('offset-up', true),
+    },
+    {
+      id: 'reset-offset',
+      name: game.i18n.localize('QSCALE.KEYS.Reset_Offset'),
+      key: 'Backslash',
+      mods: ['ALT'],
+      restricted: true,
+      action: () => resetOffset(),
+    },
+    {
       id: 'random-scale',
       name: game.i18n.localize('QSCALE.KEYS.Random_Scale'),
       hint: game.i18n.localize('QSCALE.KEYS.Random_Scale_Hint'),
@@ -221,6 +261,14 @@ Hooks.on('renderSettingsConfig', () => {
   tileSlider.noUiSlider.on('change', saveTileRange);
 });
 
+// Gotta hook in here to handle the vertical offsets.
+Hooks.on('refreshToken', (token) => {
+  if (!token.mesh) return;
+  const { offsetX, offsetY } = token.document.texture;
+  token.mesh.position.x += offsetX;
+  token.mesh.position.y += offsetY;
+});
+
 function handleRandomScaleKey(currentToolLayer, key) {
   switch (currentToolLayer) {
     case 'TokenLayer':
@@ -258,6 +306,26 @@ function saveTokenRange(values, handle, unencoded, tap, positions, noUiSlider) {
 function saveTileRange(values, handle, unencoded, tap, positions, noUiSlider) {
   $('input[name="quickscale.tile-random-min"]').val(values[0]);
   $('input[name="quickscale.tile-random-max"]').val(values[1]);
+}
+
+async function updateOffset(action, largeStep) {
+  let increase = false;
+  if (action == 'offset-up') increase = true;
+
+  // Token controls are only for Assistant or higher.
+  const authorized = game.user.role >= CONST.USER_ROLES.ASSISTANT;
+
+  if (authorized) {
+    await canvas.tokens.updateAll(
+      (t) => ({
+        texture: {
+          offsetY: getNewTokenOffset(t.document.texture.offsetY, increase, largeStep),
+        },
+      }),
+      (t) => t.controlled,
+      { animate: false }
+    );
+  }
 }
 
 // Main scaling function.
@@ -367,6 +435,23 @@ async function updateSize(action, largeStep) {
         }
       }
       break;
+  }
+}
+
+async function resetOffset() {
+  // Token controls are only for Assistant or higher.
+  const authorized = game.user.role >= CONST.USER_ROLES.ASSISTANT;
+
+  if (authorized) {
+    await canvas.tokens.updateAll(
+      (t) => ({
+        texture: {
+          offsetY: 0,
+        },
+      }),
+      (t) => t.controlled,
+      { animate: false }
+    );
   }
 }
 
@@ -504,6 +589,22 @@ function getNewTokenScale(old, increase) {
     newScale = Math.max(Math.round((old - 0.1) * 10) / 10, 0.3);
   }
   return newScale;
+}
+
+function getNewTokenOffset(old, increase, largeStep) {
+  // Get values for the increment/decrement processes.
+  let newOffset = old;
+
+  // 1-pixel increments normally, 10 for large steps.
+  let thisStep = 1;
+  if (largeStep) thisStep = 10;
+
+  if (increase) {
+    newOffset = old - thisStep;
+  } else {
+    newOffset = old + thisStep;
+  }
+  return newOffset;
 }
 
 // This whole bit was cribbed from Kandashi's Next Up module:
