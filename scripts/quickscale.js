@@ -6,7 +6,7 @@ const QS_Scale_Down = 0.95;
 const QS_Save_Animation_Path = 'modules/quickscale/assets/spinburst2.webm';
 const QS_Revert_Animation_Path = 'modules/quickscale/assets/boom7.webm';
 
-async function setDefaultSettings() {
+async function QuickScale_setDefaultSettings() {
   const defaultSettings = [
     { id: 'token-random-min', name: '', hint: '', type: Number, default: 0.8 },
     { id: 'token-random-max', name: '', hint: '', type: Number, default: 1.2 },
@@ -45,7 +45,7 @@ async function setDefaultSettings() {
   }
 }
 
-async function setKeyBindings() {
+async function QuickScale_setKeyBindings() {
   const defaultKeys = [
     {
       id: 'scale-down',
@@ -174,8 +174,8 @@ async function setKeyBindings() {
 }
 
 Hooks.on('init', function () {
-  setDefaultSettings();
-  setKeyBindings();
+  QuickScale_setDefaultSettings();
+  QuickScale_setKeyBindings();
 });
 
 Hooks.on('renderSettingsConfig', () => {
