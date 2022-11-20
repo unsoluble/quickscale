@@ -465,6 +465,7 @@ async function updatePrototype() {
       actorID: t.document.actorId,
       scaleX: t.document.texture.scaleX,
       scaleY: t.document.texture.scaleY,
+      offsetY: t.document.texture.offsetY,
     };
   });
 
@@ -473,6 +474,7 @@ async function updatePrototype() {
     _id: entry.actorID,
     'prototypeToken.texture.scaleX': entry.scaleX,
     'prototypeToken.texture.scaleY': entry.scaleY,
+    'prototypeToken.texture.offsetY': entry.offsetY,
   }));
   Actor.updateDocuments(actorUpdates);
 
