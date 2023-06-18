@@ -487,8 +487,8 @@ async function revertPrototype() {
   await canvas.tokens.updateAll(
     (t) => ({
       texture: {
-        scaleX: t.document._actor.prototypeToken.texture.scaleX,
-        scaleY: t.document._actor.prototypeToken.texture.scaleY,
+        scaleX: t.document.actor.prototypeToken.texture.scaleX,
+        scaleY: t.document.actor.prototypeToken.texture.scaleY,
       },
     }),
     (t) => t.controlled
