@@ -1,6 +1,13 @@
 {
   "title": "QuickScale",
+  "id": "quickscale",
+  "name": "quickscale",
   "description": "A small module for quickly adjusting the scale of things.",
+  "compatibility": {
+    "minimum": 10,
+    "verified": 11
+  },
+  "minimumCoreVersion": 10,
   "version": "1.0.0",
   "readme": "https://github.com/unsoluble/quickscale/blob/main/README.md",
   "bugs": "https://github.com/unsoluble/quickscale/issues",
@@ -20,14 +27,13 @@
       "path": "lang/en.json"
     }
   ],
+  "media": [
+    {
+      "type": "setup",
+      "thumbnail": "modules/quickscale/assets/manifest-cover.webp"
+    }
+  ],
   "url": "https://github.com/unsoluble/quickscale",
   "manifest": "https://github.com/unsoluble/quickscale/releases/latest/download/module.json",
-  "download": "https://github.com/unsoluble/smalltime/releases/download/1.0.0/module.zip",
-  "id": "quickscale",
-  "name": "quickscale",
-  "compatibility": {
-    "minimum": 10,
-    "verified": 10
-  },
-  "minimumCoreVersion": 10
+  "download": "https://github.com/unsoluble/smalltime/releases/download/1.0.0/module.zip"
 }
