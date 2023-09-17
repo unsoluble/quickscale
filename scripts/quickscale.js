@@ -264,8 +264,9 @@ Hooks.on('renderSettingsConfig', () => {
 // Gotta hook in here to handle the vertical offsets.
 Hooks.on('refreshToken', (token) => {
   if (!token.mesh) return;
-  const { offsetY } = token.document.texture;
-  token.mesh.position.y = token.document.y + offsetY;
+  const { offsetX, offsetY } = token.document.texture;
+  token.mesh.position.x += offsetX;
+  token.mesh.position.y += offsetY;
 });
 
 function handleRandomScaleKey(currentToolLayer, key) {
