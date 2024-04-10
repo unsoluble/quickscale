@@ -507,24 +507,27 @@ async function randomizeScale() {
 
   // Randomize token scales.
   if (canvas.tokens.controlled.length > 0) {
-    const newScale =
+    let updates=[];
+    let newScale;
+    
+    for (let tokenDoc of canvas.tokens.controlled){
+      newScale =
       Math.round(
         getRandomArbitrary(
           game.settings.get('quickscale', 'token-random-min'),
           game.settings.get('quickscale', 'token-random-max')
         ) * 10
       ) / 10; // Extra math here is for decimal truncation.
-
-    await canvas.tokens.updateAll(
-      (t) => ({
+      updates.push({
+        _id:tokenDoc.id,
         texture: {
           scaleX: newScale,
           scaleY: newScale,
-        },
-      }),
-      (t) => t.controlled,
-      { animate: false }
-    );
+        }
+      })
+    }
+    
+    canvas.scene.updateEmbeddedDocuments("Token", updates, { animate: false })
   }
 
   // Randomize tile scales.
