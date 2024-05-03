@@ -14,14 +14,11 @@ Brief video overview here: [https://www.youtube.com/watch?v=SqG9uuHQA2s](https:/
 
 ### Controls
 
-Under Foundry v9 or newer, all keybinds can be configured in the core Configure Controls window. Keys listed below are the defaults.
-
-Under v8, custom keybinds are available with the use of the [Library: DF Hotkeys](https://foundryvtt.com/packages/lib-df-hotkeys) module.
-
+All keybinds can be configured in the core Configure Controls window. Keys listed below are the defaults.
 
 ### Tokens & Tiles
 
-- `[` and `]` will adjust tokens or tiles incrementally. **PF2E Note:** If you have `Link to Actor Size` enabled in a token's configuration, QuickScale will not be able to change that token's scale.
+- `[` and `]` will adjust tokens or tiles incrementally. **PF2E Note:** If you have `Link to Actor Size` enabled in a token's configuration, QuickScale will not be able to change that token's scale. **V12 Note:** These keys conflict with the core defaults for `Send Objects to the Back/Front`. If you want to use those, you'll have to rebind one or the other.
 - Will work with multiple selections.
 - `Shift + [` will apply a small amount of random scaling to all controlled tokens or tiles.
 - `Shift + ]` will apply a small amount of random rotation.]
