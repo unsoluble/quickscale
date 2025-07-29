@@ -75,46 +75,51 @@ async function QuickScale_setKeyBindings() {
       mods: ['SHIFT'],
       action: () => updateSize('scale-up', true),
     },
-    {
-      id: 'offset-down',
-      name: game.i18n.localize('QSCALE.KEYS.Offset_Down'),
-      key: 'BracketLeft',
-      mods: ['ALT'],
-      restricted: true,
-      action: () => updateOffset('offset-down', false),
-    },
-    {
-      id: 'offset-up',
-      name: game.i18n.localize('QSCALE.KEYS.Offset_Up'),
-      key: 'BracketRight',
-      mods: ['ALT'],
-      restricted: true,
-      action: () => updateOffset('offset-up', false),
-    },
-    {
-      id: 'offset-down-large',
-      name: game.i18n.localize('QSCALE.KEYS.Offset_Down_Large'),
-      key: 'BracketLeft',
-      mods: ['ALT', 'SHIFT'],
-      restricted: true,
-      action: () => updateOffset('offset-down', true),
-    },
-    {
-      id: 'offset-up-large',
-      name: game.i18n.localize('QSCALE.KEYS.Offset_Up_Large'),
-      key: 'BracketRight',
-      mods: ['ALT', 'SHIFT'],
-      restricted: true,
-      action: () => updateOffset('offset-up', true),
-    },
-    {
-      id: 'reset-offset',
-      name: game.i18n.localize('QSCALE.KEYS.Reset_Offset'),
-      key: 'Backslash',
-      mods: ['ALT'],
-      restricted: true,
-      action: () => resetOffset(),
-    },
+    // Don't register the offset keybinds for v12 and later
+    ...(game.release.generation < 12
+      ? [
+          {
+            id: 'offset-down',
+            name: game.i18n.localize('QSCALE.KEYS.Offset_Down'),
+            key: 'BracketLeft',
+            mods: ['ALT'],
+            restricted: true,
+            action: () => updateOffset('offset-down', false),
+          },
+          {
+            id: 'offset-up',
+            name: game.i18n.localize('QSCALE.KEYS.Offset_Up'),
+            key: 'BracketRight',
+            mods: ['ALT'],
+            restricted: true,
+            action: () => updateOffset('offset-up', false),
+          },
+          {
+            id: 'offset-down-large',
+            name: game.i18n.localize('QSCALE.KEYS.Offset_Down_Large'),
+            key: 'BracketLeft',
+            mods: ['ALT', 'SHIFT'],
+            restricted: true,
+            action: () => updateOffset('offset-down', true),
+          },
+          {
+            id: 'offset-up-large',
+            name: game.i18n.localize('QSCALE.KEYS.Offset_Up_Large'),
+            key: 'BracketRight',
+            mods: ['ALT', 'SHIFT'],
+            restricted: true,
+            action: () => updateOffset('offset-up', true),
+          },
+          {
+            id: 'reset-offset',
+            name: game.i18n.localize('QSCALE.KEYS.Reset_Offset'),
+            key: 'Backslash',
+            mods: ['ALT'],
+            restricted: true,
+            action: () => resetOffset(),
+          },
+        ]
+      : []),
     {
       id: 'random-scale',
       name: game.i18n.localize('QSCALE.KEYS.Random_Scale'),
@@ -208,10 +213,7 @@ Hooks.on('renderSettingsConfig', () => {
   const tokenSlider = document.getElementById('quickscale-token-slider');
 
   noUiSlider.create(tokenSlider, {
-    start: [
-      game.settings.get('quickscale', 'token-random-min'),
-      game.settings.get('quickscale', 'token-random-max'),
-    ],
+    start: [game.settings.get('quickscale', 'token-random-min'), game.settings.get('quickscale', 'token-random-max')],
     tooltips: [wNumb({ decimals: 1 }), wNumb({ decimals: 1 })],
     behaviour: 'drag-all',
     step: 0.1, // Snap to tenths.
@@ -228,10 +230,7 @@ Hooks.on('renderSettingsConfig', () => {
   const tileSlider = document.getElementById('quickscale-tile-slider');
 
   noUiSlider.create(tileSlider, {
-    start: [
-      game.settings.get('quickscale', 'tile-random-min'),
-      game.settings.get('quickscale', 'tile-random-max'),
-    ],
+    start: [game.settings.get('quickscale', 'tile-random-min'), game.settings.get('quickscale', 'tile-random-max')],
     tooltips: [wNumb({ decimals: 1 }), wNumb({ decimals: 1 })],
     behaviour: 'drag-all',
     step: 0.1, // Snap to tenths.
@@ -244,28 +243,19 @@ Hooks.on('renderSettingsConfig', () => {
     },
   });
 
-  // Tweak to accommodate TidyUI's smaller available space.
-  if (game.modules.get('tidy-ui_game-settings')?.active) {
-    $('.noUi-base').css({
-      width: '480px',
-    });
-    $('#quickscale-token-slider').css({
-      transform: 'translate(30px, 5px)',
-    });
-    $('#quickscale-tile-slider').css({
-      transform: 'translate(30px, 5px)',
-    });
-  }
-
   tokenSlider.noUiSlider.on('change', saveTokenRange);
   tileSlider.noUiSlider.on('change', saveTileRange);
 });
 
 // Gotta hook in here to handle the vertical offsets.
 Hooks.on('refreshToken', (token) => {
+  if (game.release.generation > 11) {
+    // Offset functionality isn't needed in v12 or later
+    return;
+  }
   if (!token.mesh) return;
   const offsetY = token.document.texture.offsetY;
-  const sizeOffset = token.h/2;
+  const sizeOffset = token.h / 2;
   token.mesh.position.y = token.document.y + offsetY + sizeOffset;
 });
 
@@ -323,7 +313,7 @@ async function updateOffset(action, largeStep) {
         },
       }),
       (t) => t.controlled,
-      { animate: false }
+      { animate: false },
     );
   }
 }
@@ -343,11 +333,11 @@ async function updateSize(action, largeStep) {
         (t) => ({
           texture: {
             scaleX: getNewTokenScale(t.document.texture.scaleX, increase),
-            scaleY: getNewTokenScale(t.document.texture.scaleX, increase),
+            scaleY: getNewTokenScale(t.document.texture.scaleY, increase),
           },
         }),
         (t) => t.controlled,
-        { animate: false }
+        { animate: false },
       );
     }
   } else if (game.canvas.activeLayer instanceof TilesLayer) {
@@ -370,21 +360,13 @@ async function updateSize(action, largeStep) {
         let currentBright = hoveredLight.config.bright;
         if (largeStep) {
           await hoveredLight.update({
-            'config.dim': increase
-              ? Math.floor(currentDim + 5)
-              : Math.max(Math.ceil(currentDim - 5), 0),
-            'config.bright': increase
-              ? Math.floor(currentBright + 5)
-              : Math.max(Math.ceil(currentBright - 5), 0),
+            'config.dim': increase ? Math.floor(currentDim + 5) : Math.max(Math.ceil(currentDim - 5), 0),
+            'config.bright': increase ? Math.floor(currentBright + 5) : Math.max(Math.ceil(currentBright - 5), 0),
           });
         } else {
           await hoveredLight.update({
-            'config.dim': increase
-              ? Math.floor(currentDim + 1)
-              : Math.max(Math.ceil(currentDim - 1), 0),
-            'config.bright': increase
-              ? Math.floor(currentBright + 1)
-              : Math.max(Math.ceil(currentBright - 1), 0),
+            'config.dim': increase ? Math.floor(currentDim + 1) : Math.max(Math.ceil(currentDim - 1), 0),
+            'config.bright': increase ? Math.floor(currentBright + 1) : Math.max(Math.ceil(currentBright - 1), 0),
           });
         }
       }
@@ -397,15 +379,11 @@ async function updateSize(action, largeStep) {
         const currentRadius = hoveredSound.radius;
         if (largeStep) {
           await hoveredSound.update({
-            radius: increase
-              ? Math.floor(currentRadius + 5)
-              : Math.max(Math.ceil(currentRadius - 5), 0),
+            radius: increase ? Math.floor(currentRadius + 5) : Math.max(Math.ceil(currentRadius - 5), 0),
           });
         } else {
           await hoveredSound.update({
-            radius: increase
-              ? Math.floor(currentRadius + 1)
-              : Math.max(Math.ceil(currentRadius - 1), 0),
+            radius: increase ? Math.floor(currentRadius + 1) : Math.max(Math.ceil(currentRadius - 1), 0),
           });
         }
       }
@@ -417,15 +395,11 @@ async function updateSize(action, largeStep) {
       const currentDistance = hoveredTemplate.distance;
       if (largeStep) {
         await hoveredTemplate.update({
-          distance: increase
-            ? Math.floor(currentDistance + 5)
-            : Math.max(Math.ceil(currentDistance - 5), 1),
+          distance: increase ? Math.floor(currentDistance + 5) : Math.max(Math.ceil(currentDistance - 5), 1),
         });
       } else {
         await hoveredTemplate.update({
-          distance: increase
-            ? Math.floor(currentDistance + 1)
-            : Math.max(Math.ceil(currentDistance - 1), 1),
+          distance: increase ? Math.floor(currentDistance + 1) : Math.max(Math.ceil(currentDistance - 1), 1),
         });
       }
     }
@@ -444,7 +418,7 @@ async function resetOffset() {
         },
       }),
       (t) => t.controlled,
-      { animate: false }
+      { animate: false },
     );
   }
 }
@@ -491,7 +465,7 @@ async function revertPrototype() {
         scaleY: t.document.actor.prototypeToken.texture.scaleY,
       },
     }),
-    (t) => t.controlled
+    (t) => t.controlled,
   );
 
   // Fire off an animation for visual feedback.
@@ -507,36 +481,28 @@ async function randomizeScale() {
 
   // Randomize token scales.
   if (canvas.tokens.controlled.length > 0) {
-    let updates=[];
+    let updates = [];
     let newScale;
-    
-    for (let tokenDoc of canvas.tokens.controlled){
+
+    for (let tokenDoc of canvas.tokens.controlled) {
       newScale =
-      Math.round(
-        getRandomArbitrary(
-          game.settings.get('quickscale', 'token-random-min'),
-          game.settings.get('quickscale', 'token-random-max')
-        ) * 10
-      ) / 10; // Extra math here is for decimal truncation.
+        Math.round(getRandomArbitrary(game.settings.get('quickscale', 'token-random-min'), game.settings.get('quickscale', 'token-random-max')) * 10) / 10; // Extra math here is for decimal truncation.
       updates.push({
-        _id:tokenDoc.id,
+        _id: tokenDoc.id,
         texture: {
           scaleX: newScale,
           scaleY: newScale,
-        }
-      })
+        },
+      });
     }
-    
-    canvas.scene.updateEmbeddedDocuments("Token", updates, { animate: false })
+
+    canvas.scene.updateEmbeddedDocuments('Token', updates, { animate: false });
   }
 
   // Randomize tile scales.
   if (canvas.tiles.controlled.length > 0) {
     const tileUpdates = canvas.tiles.controlled.map((t) => {
-      const randomTileScale = getRandomArbitrary(
-        game.settings.get('quickscale', 'tile-random-min'),
-        game.settings.get('quickscale', 'tile-random-max')
-      );
+      const randomTileScale = getRandomArbitrary(game.settings.get('quickscale', 'tile-random-min'), game.settings.get('quickscale', 'tile-random-max'));
       return {
         _id: t.id,
         width: Math.round(t.document.width * randomTileScale),
@@ -558,11 +524,9 @@ async function randomizeRotation() {
   // Update controlled tokens. Check for rotation lock, don't rotate if true.
   await canvas.tokens.updateAll(
     (t) => ({
-      rotation: t.document.lockRotation
-        ? t.document.rotation
-        : Math.round(t.document.rotation + getRandomArbitrary(0 - rotation, rotation)),
+      rotation: t.document.lockRotation ? t.document.rotation : Math.round(t.document.rotation + getRandomArbitrary(0 - rotation, rotation)),
     }),
-    (t) => t.controlled
+    (t) => t.controlled,
   );
 
   // Update controlled tiles.
@@ -581,13 +545,14 @@ function getRandomArbitrary(min, max) {
 
 function getNewTokenScale(old, increase) {
   // Get values for the increment/decrement processes.
+  const sign = Math.sign(old);
   let newScale = old;
   if (increase) {
-    newScale = Math.min(Math.round((old + 0.1) * 10) / 10, 10);
+    newScale = Math.min(Math.round((Math.abs(old) + 0.1) * 10) / 10, 10);
   } else {
-    newScale = Math.max(Math.round((old - 0.1) * 10) / 10, 0.3);
+    newScale = Math.max(Math.round((Math.abs(old) - 0.1) * 10) / 10, 0.3);
   }
-  return newScale;
+  return sign * newScale;
 }
 
 function getNewTokenOffset(old, increase, largeStep) {
@@ -610,9 +575,7 @@ function getNewTokenOffset(old, increase, largeStep) {
 // https://github.com/kandashi/Next-Up
 async function createAnimation(save, tokenID) {
   const token = canvas.tokens.get(tokenID);
-  const animationTexture = await loadTexture(
-    save ? QS_Save_Animation_Path : QS_Revert_Animation_Path
-  );
+  const animationTexture = await loadTexture(save ? QS_Save_Animation_Path : QS_Revert_Animation_Path);
   const textureSize = canvas.grid.size + canvas.dimensions.size;
   animationTexture.orig = {
     height: save ? textureSize : textureSize / 2,
@@ -634,6 +597,6 @@ async function createAnimation(save, tokenID) {
     () => {
       token.removeChild(sprite);
     },
-    save ? 1200 : 1800
+    save ? 1200 : 1800,
   );
 }
