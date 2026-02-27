@@ -18,18 +18,11 @@ All keybinds can be configured in the core Configure Controls window. Keys liste
 
 ### Tokens & Tiles
 
-- `[` and `]` will adjust tokens or tiles incrementally. **PF2E Note:** If you have `Link to Actor Size` enabled in a token's configuration, QuickScale will not be able to change that token's scale. **V12 Note:** These keys conflict with the core defaults for `Send Objects to the Back/Front`. If you want to use those, you'll have to rebind one or the other.
+- `[` and `]` will adjust tokens or tiles incrementally. **PF2E Note:** If you have `Link to Actor Size` enabled in a token's configuration, QuickScale will not be able to change that token's scale. **Note:** These keys conflict with the core defaults for `Send Objects to the Back/Front`. If you want to use those, you'll have to rebind one or the other.
 - Will work with multiple selections.
 - `Shift + [` will apply a small amount of random scaling to all controlled tokens or tiles.
-- `Shift + ]` will apply a small amount of random rotation.]
+- `Shift + ]` will apply a small amount of random rotation.
 - If one or more tokens are controlled, `Shift + \` will save the tokens' current scale to their actors' Prototype Token config.
-- `Alt + [` will nudge the token art down relative to the grid square (useful for isometric-style artwork). Note that there are controls for offset distance ("Anchor") in core Foundry v12; when in v12, use those instead.
-- `Alt + ]` will nudge up.
-- `Alt + Shift + [` will nudge down in larger steps.
-- `Alt + Shift + ]` nudges up in large steps.
-- `Alt + \` will reset the nudged offset to zero.
-
-![Nudging](doc/Nudging.gif)
 
 ### Lights & Sounds
 
@@ -52,8 +45,6 @@ There are a few settings you can adjust:
 - _Token Scale Randomization Range_ sets the minimum and maximum scale values that tokens will randomize within.
 - _Tile Scale Randomization Range_ sets similar bounds for the tile randomization tool.
 - _Maximum Rotation Amount_ sets the bounds for random rotations — a value of 15 here will allow for random changes between -15° and 15°.
-
-
 
 ### Thanks!
 

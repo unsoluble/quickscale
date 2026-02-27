@@ -3,7 +3,7 @@
   "id": "quickscale",
   "description": "A small module for quickly adjusting the scale of things.",
   "compatibility": {
-    "minimum": 10,
+    "minimum": 13,
     "verified": 13
   },
   "version": "1.0.0",
