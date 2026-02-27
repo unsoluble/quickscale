@@ -51,13 +51,13 @@ async function QuickScale_setKeyBindings() {
       id: 'scale-down',
       name: game.i18n.localize('QSCALE.KEYS.Scale_Down'),
       key: 'BracketLeft',
-      action: () => updateSize('scale-down', false),
+      action: () => onScaleKeybind('scale-down', false),
     },
     {
       id: 'scale-up',
       name: game.i18n.localize('QSCALE.KEYS.Scale_Up'),
       key: 'BracketRight',
-      action: () => updateSize('scale-up', false),
+      action: () => onScaleKeybind('scale-up', false),
     },
     {
       id: 'scale-down-large',
@@ -65,7 +65,7 @@ async function QuickScale_setKeyBindings() {
       hint: game.i18n.localize('QSCALE.KEYS.Large_Step_Hint'),
       key: 'BracketLeft',
       mods: ['SHIFT'],
-      action: () => updateSize('scale-down', true),
+      action: () => onScaleKeybind('scale-down', true),
     },
     {
       id: 'scale-up-large',
@@ -73,7 +73,7 @@ async function QuickScale_setKeyBindings() {
       hint: game.i18n.localize('QSCALE.KEYS.Large_Step_Hint'),
       key: 'BracketRight',
       mods: ['SHIFT'],
-      action: () => updateSize('scale-up', true),
+      action: () => onScaleKeybind('scale-up', true),
     },
     {
       id: 'random-scale',
@@ -82,7 +82,7 @@ async function QuickScale_setKeyBindings() {
       key: 'BracketLeft',
       mods: ['SHIFT'],
       precedence: CONST.KEYBINDING_PRECEDENCE.PRIORITY,
-      action: () => handleRandomScaleKey(game.canvas.activeLayer.name, 'scale-down'),
+      action: () => onRandomScaleKeybind('scale-down'),
     },
     {
       id: 'random-rotation',
@@ -91,16 +91,14 @@ async function QuickScale_setKeyBindings() {
       key: 'BracketRight',
       mods: ['SHIFT'],
       precedence: CONST.KEYBINDING_PRECEDENCE.PRIORITY,
-      action: () => handleRandomRotationKey(game.canvas.activeLayer.name, 'scale-up'),
+      action: () => onRandomRotationKeybind('scale-up'),
     },
     {
       id: 'revert-prototype',
       name: game.i18n.localize('QSCALE.KEYS.Revert_Prototype'),
       hint: game.i18n.localize('QSCALE.KEYS.Revert_Prototype_Hint'),
       key: 'Backslash',
-      action: () => {
-        if (game.canvas.activeLayer.name == 'TokenLayer') revertPrototype();
-      },
+      action: () => onRevertPrototypeKeybind(),
     },
     {
       id: 'update-prototype',
@@ -108,9 +106,7 @@ async function QuickScale_setKeyBindings() {
       hint: game.i18n.localize('QSCALE.KEYS.Update_Prototype_Hint'),
       key: 'Backslash',
       mods: ['SHIFT'],
-      action: () => {
-        if (game.canvas.activeLayer.name == 'TokenLayer') updatePrototype();
-      },
+      action: () => onUpdatePrototypeKeybind(),
     },
   ];
 
@@ -121,10 +117,7 @@ async function QuickScale_setKeyBindings() {
       editable: [{ key: key.key, modifiers: key.mods }],
       precedence: key.precedence,
       restricted: key.restricted,
-      onDown: () => {
-        key.action();
-        return true;
-      },
+      onDown: () => key.action(),
     });
   }
 }
@@ -134,36 +127,40 @@ Hooks.on('init', function () {
   QuickScale_setKeyBindings();
 });
 
-Hooks.on('renderSettingsConfig', () => {
+Hooks.on('renderSettingsConfig', (app, html) => {
   // This is all GM-only.
   if (game.user.role < CONST.USER_ROLES.ASSISTANT) return;
 
-  // Hide the inputs that will hold the values but shouldn't be visible.
-  $('input[name="quickscale.token-random-min"]').parent().parent().css('display', 'none');
-  $('input[name="quickscale.token-random-max"]').parent().parent().css('display', 'none');
-  $('input[name="quickscale.token-random-label"]').css('display', 'none');
-  $('input[name="quickscale.tile-random-min"]').parent().parent().css('display', 'none');
-  $('input[name="quickscale.tile-random-max"]').parent().parent().css('display', 'none');
-  $('input[name="quickscale.tile-random-label"]').css('display', 'none');
+  const root = html instanceof jQuery ? html : $(html);
+  const tokenMinInput = root.find('input[name="quickscale.token-random-min"]');
+  const tokenMaxInput = root.find('input[name="quickscale.token-random-max"]');
+  const tokenLabelInput = root.find('input[name="quickscale.token-random-label"]');
+  const tileMinInput = root.find('input[name="quickscale.tile-random-min"]');
+  const tileMaxInput = root.find('input[name="quickscale.tile-random-max"]');
+  const tileLabelInput = root.find('input[name="quickscale.tile-random-label"]');
 
-  // Find the right elements to insert after, and build the divs for insertion.
-  const tokenSliderLocation = $('input[name="quickscale.token-random-label"]').parent().next();
-  const tokenSliderInjection = `<div id="quickscale-token-slider"></div>`;
-  const tileSliderLocation = $('input[name="quickscale.tile-random-label"]').parent().next();
-  const tileSliderInjection = `<div id="quickscale-tile-slider"></div>`;
+  tokenMinInput.closest('.form-group').hide();
+  tokenMaxInput.closest('.form-group').hide();
+  tileMinInput.closest('.form-group').hide();
+  tileMaxInput.closest('.form-group').hide();
 
-  // Only inject these if they aren't already there.
-  if (!$('#quickscale-token-slider').length) {
-    tokenSliderLocation.after(tokenSliderInjection);
+  tokenLabelInput.hide();
+  tileLabelInput.hide();
+
+  const tokenFields = tokenLabelInput.closest('.form-group').find('.form-fields').first();
+  const tileFields = tileLabelInput.closest('.form-group').find('.form-fields').first();
+
+  if (!tokenFields.find('#quickscale-token-slider').length) {
+    tokenFields.append('<div id="quickscale-token-slider"></div>');
   }
-  if (!$('#quickscale-tile-slider').length) {
-    tileSliderLocation.after(tileSliderInjection);
+  if (!tileFields.find('#quickscale-tile-slider').length) {
+    tileFields.append('<div id="quickscale-tile-slider"></div>');
   }
 
   // Create a custom two-handled slider for the token scale range.
-  const tokenSlider = document.getElementById('quickscale-token-slider');
+  const tokenSlider = tokenFields.find('#quickscale-token-slider')[0];
 
-  if (!tokenSlider.noUiSlider) {
+  if (tokenSlider && !tokenSlider.noUiSlider) {
     noUiSlider.create(tokenSlider, {
       start: [game.settings.get('quickscale', 'token-random-min'), game.settings.get('quickscale', 'token-random-max')],
       tooltips: [wNumb({ decimals: 1 }), wNumb({ decimals: 1 })],
@@ -180,9 +177,9 @@ Hooks.on('renderSettingsConfig', () => {
   }
 
   // Create a second two-handled slider for the tile scale range.
-  const tileSlider = document.getElementById('quickscale-tile-slider');
+  const tileSlider = tileFields.find('#quickscale-tile-slider')[0];
 
-  if (!tileSlider.noUiSlider) {
+  if (tileSlider && !tileSlider.noUiSlider) {
     noUiSlider.create(tileSlider, {
       start: [game.settings.get('quickscale', 'tile-random-min'), game.settings.get('quickscale', 'tile-random-max')],
       tooltips: [wNumb({ decimals: 1 }), wNumb({ decimals: 1 })],
@@ -198,36 +195,88 @@ Hooks.on('renderSettingsConfig', () => {
     });
   }
 
-  tokenSlider.noUiSlider.on('change', saveTokenRange);
-  tileSlider.noUiSlider.on('change', saveTileRange);
+  if (tokenSlider?.noUiSlider) {
+    tokenSlider.noUiSlider.off('change', saveTokenRange);
+    tokenSlider.noUiSlider.on('change', saveTokenRange);
+  }
+  if (tileSlider?.noUiSlider) {
+    tileSlider.noUiSlider.off('change', saveTileRange);
+    tileSlider.noUiSlider.on('change', saveTileRange);
+  }
 });
 
-function handleRandomScaleKey(currentToolLayer, key) {
-  switch (currentToolLayer) {
-    case 'TokenLayer':
-    case 'TilesLayer':
-      randomizeScale();
-      break;
-    case 'TemplateLayer':
-    case 'LightingLayer':
-    case 'SoundsLayer':
-      updateSize(key, true);
-      break;
-  }
+function runAsync(action) {
+  Promise.resolve()
+    .then(action)
+    .catch((err) => {
+      console.error('quickscale | Keybind action failed', err);
+    });
 }
 
-function handleRandomRotationKey(currentToolLayer, key) {
-  switch (currentToolLayer) {
-    case 'TokenLayer':
-    case 'TilesLayer':
-      randomizeRotation();
-      break;
-    case 'TemplateLayer':
-    case 'LightingLayer':
-    case 'SoundsLayer':
-      updateSize(key, true);
-      break;
+function onScaleKeybind(action, largeStep) {
+  const layer = game.canvas?.activeLayer;
+  const authorized = game.user.role >= CONST.USER_ROLES.ASSISTANT;
+
+  if (layer instanceof TokenLayer) {
+    if (!authorized || !canvas.tokens.controlled.length) return false;
+  } else if (layer instanceof TilesLayer) {
+    if (!authorized || !canvas.tiles.controlled.length) return false;
+  } else if (layer instanceof LightingLayer) {
+    if (!authorized || !canvas.lighting.hover?.document) return false;
+  } else if (layer instanceof SoundsLayer) {
+    if (!authorized || !canvas.sounds.hover?.document) return false;
+  } else if (layer instanceof TemplateLayer) {
+    if (!canvas.templates.hover?.document) return false;
+  } else {
+    return false;
   }
+
+  runAsync(() => updateSize(action, largeStep));
+  return true;
+}
+
+function onRandomScaleKeybind(key) {
+  const layer = game.canvas?.activeLayer;
+  const authorized = game.user.role >= CONST.USER_ROLES.ASSISTANT;
+
+  if (layer instanceof TokenLayer || layer instanceof TilesLayer) {
+    if (!authorized) return false;
+    if (!canvas.tokens.controlled.length && !canvas.tiles.controlled.length) return false;
+    runAsync(() => randomizeScale());
+    return true;
+  }
+
+  return onScaleKeybind(key, true);
+}
+
+function onRandomRotationKeybind(key) {
+  const layer = game.canvas?.activeLayer;
+  const authorized = game.user.role >= CONST.USER_ROLES.ASSISTANT;
+
+  if (layer instanceof TokenLayer || layer instanceof TilesLayer) {
+    if (!authorized) return false;
+    if (!canvas.tokens.controlled.length && !canvas.tiles.controlled.length) return false;
+    runAsync(() => randomizeRotation());
+    return true;
+  }
+
+  return onScaleKeybind(key, true);
+}
+
+function onUpdatePrototypeKeybind() {
+  if (!(game.canvas?.activeLayer instanceof TokenLayer)) return false;
+  if (game.user.role < CONST.USER_ROLES.ASSISTANT) return false;
+  if (!canvas.tokens.controlled.some((t) => t.document.actorId)) return false;
+  runAsync(() => updatePrototype());
+  return true;
+}
+
+function onRevertPrototypeKeybind() {
+  if (!(game.canvas?.activeLayer instanceof TokenLayer)) return false;
+  if (game.user.role < CONST.USER_ROLES.ASSISTANT) return false;
+  if (!canvas.tokens.controlled.some((t) => t.document.actor?.prototypeToken?.texture)) return false;
+  runAsync(() => revertPrototype());
+  return true;
 }
 
 // On slider changes, save the new values into the actual inputs.
@@ -262,6 +311,7 @@ async function updateSize(action, largeStep) {
         (t) => t.controlled,
         { animate: false },
       );
+      return true;
     }
   } else if (game.canvas.activeLayer instanceof TilesLayer) {
     // Update controlled tiles.
@@ -273,6 +323,7 @@ async function updateSize(action, largeStep) {
         height: t.document.height * (increase ? QS_Scale_Up : QS_Scale_Down),
       }));
       await canvas.scene.updateEmbeddedDocuments('Tile', tileUpdates);
+      return true;
     }
   } else if (game.canvas.activeLayer instanceof LightingLayer) {
     // Update hovered light.
@@ -292,6 +343,7 @@ async function updateSize(action, largeStep) {
             'config.bright': increase ? Math.floor(currentBright + 1) : Math.max(Math.ceil(currentBright - 1), 0),
           });
         }
+        return true;
       }
     }
   } else if (game.canvas.activeLayer instanceof SoundsLayer) {
@@ -309,6 +361,7 @@ async function updateSize(action, largeStep) {
             radius: increase ? Math.floor(currentRadius + 1) : Math.max(Math.ceil(currentRadius - 1), 0),
           });
         }
+        return true;
       }
     }
   } else if (game.canvas.activeLayer instanceof TemplateLayer) {
@@ -325,22 +378,26 @@ async function updateSize(action, largeStep) {
           distance: increase ? Math.floor(currentDistance + 1) : Math.max(Math.ceil(currentDistance - 1), 1),
         });
       }
+      return true;
     }
   }
+  return false;
 }
 
 // Push current scales to prototypes.
 async function updatePrototype() {
   // Not for players.
-  if (game.user.role < CONST.USER_ROLES.ASSISTANT) return;
+  if (game.user.role < CONST.USER_ROLES.ASSISTANT) return false;
 
-  const controlledTokens = canvas.tokens.controlled.map((t) => {
+  const controlledTokens = canvas.tokens.controlled.filter((t) => t.document.actorId).map((t) => {
     return {
+      tokenID: t.document._id,
       actorID: t.document.actorId,
       scaleX: t.document.texture.scaleX,
       scaleY: t.document.texture.scaleY,
     };
   });
+  if (!controlledTokens.length) return false;
 
   // Update the base actor data with the instanced tokens' current scales.
   const actorUpdates = controlledTokens.map((entry) => ({
@@ -351,15 +408,19 @@ async function updatePrototype() {
   await Actor.updateDocuments(actorUpdates);
 
   // Fire off an animation for visual feedback.
-  for (let t of canvas.tokens.controlled) {
-    await createAnimation(true, t.document._id);
+  for (const t of controlledTokens) {
+    await createAnimation(true, t.tokenID);
   }
+  return true;
 }
 
 // Revert scales to original prototype scales.
 async function revertPrototype() {
   // Not for players.
-  if (game.user.role < CONST.USER_ROLES.ASSISTANT) return;
+  if (game.user.role < CONST.USER_ROLES.ASSISTANT) return false;
+
+  const controlledTokens = canvas.tokens.controlled.filter((t) => t.document.actor?.prototypeToken?.texture);
+  if (!controlledTokens.length) return false;
 
   // Update controlled tokens.
   await canvas.tokens.updateAll(
@@ -369,19 +430,21 @@ async function revertPrototype() {
         scaleY: t.document.actor.prototypeToken.texture.scaleY,
       },
     }),
-    (t) => t.controlled,
+    (t) => t.controlled && !!t.document.actor?.prototypeToken?.texture,
   );
 
   // Fire off an animation for visual feedback.
-  for (let t of canvas.tokens.controlled) {
+  for (const t of controlledTokens) {
     await createAnimation(false, t.document._id);
   }
+  return true;
 }
 
 // Scale randomizer. Pulls from range set in module settings.
 async function randomizeScale() {
   // Not for players.
-  if (game.user.role < CONST.USER_ROLES.ASSISTANT) return;
+  if (game.user.role < CONST.USER_ROLES.ASSISTANT) return false;
+  let changed = false;
 
   // Randomize token scales.
   if (canvas.tokens.controlled.length > 0) {
@@ -401,6 +464,7 @@ async function randomizeScale() {
     }
 
     await canvas.scene.updateEmbeddedDocuments('Token', updates, { animate: false });
+    changed = true;
   }
 
   // Randomize tile scales.
@@ -415,13 +479,16 @@ async function randomizeScale() {
     });
 
     await canvas.scene.updateEmbeddedDocuments('Tile', tileUpdates);
+    changed = true;
   }
+  return changed;
 }
 
 // Rotation randomizer for tiles.
 async function randomizeRotation() {
   // Not for players.
-  if (game.user.role < CONST.USER_ROLES.ASSISTANT) return;
+  if (game.user.role < CONST.USER_ROLES.ASSISTANT) return false;
+  if (!canvas.tokens.controlled.length && !canvas.tiles.controlled.length) return false;
 
   const rotation = game.settings.get('quickscale', 'rotation-amount');
 
@@ -441,6 +508,7 @@ async function randomizeRotation() {
     };
   });
   await canvas.scene.updateEmbeddedDocuments('Tile', tileUpdates);
+  return true;
 }
 
 function getRandomArbitrary(min, max) {
