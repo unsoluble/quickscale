@@ -19,7 +19,8 @@
       "discord": "unsoluble#5084"
     }
   ],
-  "scripts": ["scripts/quickscale.js", "scripts/nouislider.js", "scripts/wNumb.min.js"],
+  "scripts": ["scripts/nouislider.js", "scripts/wNumb.min.js"],
+  "esmodules": ["scripts/main.js"],
   "styles": ["styles/quickscale.css", "styles/nouislider.css"],
   "languages": [
     {
