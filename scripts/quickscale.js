@@ -127,40 +127,36 @@ Hooks.on('init', function () {
   QuickScale_setKeyBindings();
 });
 
-Hooks.on('renderSettingsConfig', (app, html) => {
+Hooks.on('renderSettingsConfig', () => {
   // This is all GM-only.
   if (game.user.role < CONST.USER_ROLES.ASSISTANT) return;
 
-  const root = html instanceof jQuery ? html : $(html);
-  const tokenMinInput = root.find('input[name="quickscale.token-random-min"]');
-  const tokenMaxInput = root.find('input[name="quickscale.token-random-max"]');
-  const tokenLabelInput = root.find('input[name="quickscale.token-random-label"]');
-  const tileMinInput = root.find('input[name="quickscale.tile-random-min"]');
-  const tileMaxInput = root.find('input[name="quickscale.tile-random-max"]');
-  const tileLabelInput = root.find('input[name="quickscale.tile-random-label"]');
+  // Hide the inputs that will hold the values but shouldn't be visible.
+  $('input[name="quickscale.token-random-min"]').parent().parent().css('display', 'none');
+  $('input[name="quickscale.token-random-max"]').parent().parent().css('display', 'none');
+  $('input[name="quickscale.token-random-label"]').css('display', 'none');
+  $('input[name="quickscale.tile-random-min"]').parent().parent().css('display', 'none');
+  $('input[name="quickscale.tile-random-max"]').parent().parent().css('display', 'none');
+  $('input[name="quickscale.tile-random-label"]').css('display', 'none');
 
-  tokenMinInput.closest('.form-group').hide();
-  tokenMaxInput.closest('.form-group').hide();
-  tileMinInput.closest('.form-group').hide();
-  tileMaxInput.closest('.form-group').hide();
+  // Find the right elements to insert after, and build the divs for insertion.
+  const tokenSliderLocation = $('input[name="quickscale.token-random-label"]').parent().next();
+  const tokenSliderInjection = `<div id="quickscale-token-slider"></div>`;
+  const tileSliderLocation = $('input[name="quickscale.tile-random-label"]').parent().next();
+  const tileSliderInjection = `<div id="quickscale-tile-slider"></div>`;
 
-  tokenLabelInput.hide();
-  tileLabelInput.hide();
-
-  const tokenFields = tokenLabelInput.closest('.form-group').find('.form-fields').first();
-  const tileFields = tileLabelInput.closest('.form-group').find('.form-fields').first();
-
-  if (!tokenFields.find('#quickscale-token-slider').length) {
-    tokenFields.append('<div id="quickscale-token-slider"></div>');
+  // Only inject these if they aren't already there.
+  if (!$('#quickscale-token-slider').length) {
+    tokenSliderLocation.after(tokenSliderInjection);
   }
-  if (!tileFields.find('#quickscale-tile-slider').length) {
-    tileFields.append('<div id="quickscale-tile-slider"></div>');
+  if (!$('#quickscale-tile-slider').length) {
+    tileSliderLocation.after(tileSliderInjection);
   }
 
   // Create a custom two-handled slider for the token scale range.
-  const tokenSlider = tokenFields.find('#quickscale-token-slider')[0];
+  const tokenSlider = document.getElementById('quickscale-token-slider');
 
-  if (tokenSlider && !tokenSlider.noUiSlider) {
+  if (!tokenSlider.noUiSlider) {
     noUiSlider.create(tokenSlider, {
       start: [game.settings.get('quickscale', 'token-random-min'), game.settings.get('quickscale', 'token-random-max')],
       tooltips: [wNumb({ decimals: 1 }), wNumb({ decimals: 1 })],
@@ -177,9 +173,9 @@ Hooks.on('renderSettingsConfig', (app, html) => {
   }
 
   // Create a second two-handled slider for the tile scale range.
-  const tileSlider = tileFields.find('#quickscale-tile-slider')[0];
+  const tileSlider = document.getElementById('quickscale-tile-slider');
 
-  if (tileSlider && !tileSlider.noUiSlider) {
+  if (!tileSlider.noUiSlider) {
     noUiSlider.create(tileSlider, {
       start: [game.settings.get('quickscale', 'tile-random-min'), game.settings.get('quickscale', 'tile-random-max')],
       tooltips: [wNumb({ decimals: 1 }), wNumb({ decimals: 1 })],
@@ -195,21 +191,17 @@ Hooks.on('renderSettingsConfig', (app, html) => {
     });
   }
 
-  if (tokenSlider?.noUiSlider) {
-    tokenSlider.noUiSlider.off('change', saveTokenRange);
-    tokenSlider.noUiSlider.on('change', saveTokenRange);
-  }
-  if (tileSlider?.noUiSlider) {
-    tileSlider.noUiSlider.off('change', saveTileRange);
-    tileSlider.noUiSlider.on('change', saveTileRange);
-  }
+  tokenSlider.noUiSlider.off('change', saveTokenRange);
+  tileSlider.noUiSlider.off('change', saveTileRange);
+  tokenSlider.noUiSlider.on('change', saveTokenRange);
+  tileSlider.noUiSlider.on('change', saveTileRange);
 });
 
 function runAsync(action) {
   Promise.resolve()
     .then(action)
     .catch((err) => {
-      console.error('quickscale | Keybind action failed', err);
+      console.error('QuickScale | Keybind action failed', err);
     });
 }
 
@@ -389,14 +381,16 @@ async function updatePrototype() {
   // Not for players.
   if (game.user.role < CONST.USER_ROLES.ASSISTANT) return false;
 
-  const controlledTokens = canvas.tokens.controlled.filter((t) => t.document.actorId).map((t) => {
-    return {
-      tokenID: t.document._id,
-      actorID: t.document.actorId,
-      scaleX: t.document.texture.scaleX,
-      scaleY: t.document.texture.scaleY,
-    };
-  });
+  const controlledTokens = canvas.tokens.controlled
+    .filter((t) => t.document.actorId)
+    .map((t) => {
+      return {
+        tokenID: t.document._id,
+        actorID: t.document.actorId,
+        scaleX: t.document.texture.scaleX,
+        scaleY: t.document.texture.scaleY,
+      };
+    });
   if (!controlledTokens.length) return false;
 
   // Update the base actor data with the instanced tokens' current scales.
