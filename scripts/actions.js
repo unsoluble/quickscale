@@ -9,7 +9,7 @@ export async function updateSize(action, largeStep) {
   const activeLayer = getActiveLayer();
   const step = getStepSize(largeStep);
 
-  if (activeLayer instanceof TokenLayer) {
+  if (activeLayer instanceof foundry.canvas.layers.TokenLayer) {
     if (authorized) {
       await canvas.tokens.updateAll(
         (t) => ({
@@ -23,7 +23,7 @@ export async function updateSize(action, largeStep) {
       );
       return true;
     }
-  } else if (activeLayer instanceof TilesLayer) {
+  } else if (activeLayer instanceof foundry.canvas.layers.TilesLayer) {
     if (authorized) {
       const controlledTiles = canvas.tiles.controlled;
       const tileUpdates = controlledTiles.map((t) => ({
@@ -34,7 +34,7 @@ export async function updateSize(action, largeStep) {
       await canvas.scene.updateEmbeddedDocuments('Tile', tileUpdates);
       return true;
     }
-  } else if (activeLayer instanceof LightingLayer) {
+  } else if (activeLayer instanceof foundry.canvas.layers.LightingLayer) {
     if (authorized) {
       const hoveredLight = canvas.lighting.hover?.document;
       if (hoveredLight) {
@@ -47,7 +47,7 @@ export async function updateSize(action, largeStep) {
         return true;
       }
     }
-  } else if (activeLayer instanceof SoundsLayer) {
+  } else if (activeLayer instanceof foundry.canvas.layers.SoundsLayer) {
     if (authorized) {
       const hoveredSound = canvas.sounds.hover?.document;
       if (hoveredSound) {
@@ -58,7 +58,7 @@ export async function updateSize(action, largeStep) {
         return true;
       }
     }
-  } else if (activeLayer instanceof TemplateLayer) {
+  } else if (activeLayer instanceof foundry.canvas.layers.TemplateLayer) {
     const hoveredTemplate = canvas.templates.hover?.document;
     if (hoveredTemplate) {
       const currentDistance = hoveredTemplate.distance;
@@ -196,8 +196,10 @@ function getNewTokenScale(old, increase) {
 
 async function createAnimation(save, tokenID) {
   const token = canvas.tokens.get(tokenID);
-  const animationTexture = await loadTexture(save ? QS_Save_Animation_Path : QS_Revert_Animation_Path);
+  const animationTexture = await foundry.canvas.loadTexture(save ? QS_Save_Animation_Path : QS_Revert_Animation_Path);
   const textureSize = canvas.grid.size + canvas.dimensions.size;
+  const gridWidth = canvas.grid.sizeX ?? canvas.grid.w ?? canvas.grid.size;
+  const gridHeight = canvas.grid.sizeY ?? canvas.grid.h ?? canvas.grid.size;
   animationTexture.orig = {
     height: save ? textureSize : textureSize / 2,
     width: save ? textureSize : textureSize / 2,
@@ -207,10 +209,10 @@ async function createAnimation(save, tokenID) {
   const sprite = new PIXI.Sprite(animationTexture);
   sprite.anchor.set(0.5);
   const animation = token.addChild(sprite);
-  animation.position.x = (canvas.grid.w * token.document.width) / 2;
-  animation.position.y = (canvas.grid.h * token.document.height) / 2;
+  animation.position.x = (gridWidth * token.document.width) / 2;
+  animation.position.y = (gridHeight * token.document.height) / 2;
   animation.visible = true;
-  const source = getProperty(animation._texture, 'baseTexture.resource.source');
+  const source = foundry.utils.getProperty(animation._texture, 'baseTexture.resource.source');
   game.video.play(source, { loop: false, offset: 0 });
   setTimeout(
     () => {

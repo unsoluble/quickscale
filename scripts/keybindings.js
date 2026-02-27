@@ -83,15 +83,15 @@ function onScaleKeybind(action, largeStep) {
   const layer = getActiveLayer();
   const authorized = isAssistantOrHigher();
 
-  if (layer instanceof TokenLayer) {
+  if (layer instanceof foundry.canvas.layers.TokenLayer) {
     if (!authorized || !canvas.tokens.controlled.length) return false;
-  } else if (layer instanceof TilesLayer) {
+  } else if (layer instanceof foundry.canvas.layers.TilesLayer) {
     if (!authorized || !canvas.tiles.controlled.length) return false;
-  } else if (layer instanceof LightingLayer) {
+  } else if (layer instanceof foundry.canvas.layers.LightingLayer) {
     if (!authorized || !canvas.lighting.hover?.document) return false;
-  } else if (layer instanceof SoundsLayer) {
+  } else if (layer instanceof foundry.canvas.layers.SoundsLayer) {
     if (!authorized || !canvas.sounds.hover?.document) return false;
-  } else if (layer instanceof TemplateLayer) {
+  } else if (layer instanceof foundry.canvas.layers.TemplateLayer) {
     if (!canvas.templates.hover?.document) return false;
   } else {
     return false;
@@ -105,7 +105,7 @@ function onRandomScaleKeybind(key) {
   const layer = getActiveLayer();
   const authorized = isAssistantOrHigher();
 
-  if (layer instanceof TokenLayer || layer instanceof TilesLayer) {
+  if ((layer instanceof foundry.canvas.layers.TokenLayer) || (layer instanceof foundry.canvas.layers.TilesLayer)) {
     if (!authorized) return false;
     if (!canvas.tokens.controlled.length && !canvas.tiles.controlled.length) return false;
     runAsync(() => randomizeScale());
@@ -119,7 +119,7 @@ function onRandomRotationKeybind(key) {
   const layer = getActiveLayer();
   const authorized = isAssistantOrHigher();
 
-  if (layer instanceof TokenLayer || layer instanceof TilesLayer) {
+  if ((layer instanceof foundry.canvas.layers.TokenLayer) || (layer instanceof foundry.canvas.layers.TilesLayer)) {
     if (!authorized) return false;
     if (!canvas.tokens.controlled.length && !canvas.tiles.controlled.length) return false;
     runAsync(() => randomizeRotation());
@@ -130,7 +130,7 @@ function onRandomRotationKeybind(key) {
 }
 
 function onUpdatePrototypeKeybind() {
-  if (!(getActiveLayer() instanceof TokenLayer)) return false;
+  if (!(getActiveLayer() instanceof foundry.canvas.layers.TokenLayer)) return false;
   if (!isAssistantOrHigher()) return false;
   if (!canvas.tokens.controlled.some((t) => t.document.actorId)) return false;
   runAsync(() => updatePrototype());
@@ -138,7 +138,7 @@ function onUpdatePrototypeKeybind() {
 }
 
 function onRevertPrototypeKeybind() {
-  if (!(getActiveLayer() instanceof TokenLayer)) return false;
+  if (!(getActiveLayer() instanceof foundry.canvas.layers.TokenLayer)) return false;
   if (!isAssistantOrHigher()) return false;
   if (!canvas.tokens.controlled.some((t) => t.document.actor?.prototypeToken?.texture)) return false;
   runAsync(() => revertPrototype());
