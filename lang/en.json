@@ -8,7 +8,7 @@
   "QSCALE.KEYS.Scale_Down": "Scale Down",
   "QSCALE.KEYS.Scale_Up_Large": "Scale Up in Large Steps",
   "QSCALE.KEYS.Scale_Down_Large": "Scale Down in Large Steps",
-  "QSCALE.KEYS.Large_Step_Hint": "Lights, Sounds, and Templates only",
+  "QSCALE.KEYS.Large_Step_Hint": "Lights and Sounds only",
   "QSCALE.KEYS.Random_Scale": "Randomize Scale",
   "QSCALE.KEYS.Random_Scale_Hint": "Tokens and Tiles only",
   "QSCALE.KEYS.Random_Rotation": "Randomize Rotation",

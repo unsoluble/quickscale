@@ -1,5 +1,5 @@
 import { QS_MODULE_ID, QS_Revert_Animation_Path, QS_Save_Animation_Path, QS_Scale_Down, QS_Scale_Up } from './constants.js';
-import { getActiveLayer, getRandomArbitrary, getStepSize, isAssistantOrHigher } from './helpers.js';
+import { getActiveLayer, getRandomArbitrary, getStepSize, isAssistantOrHigher, isFoundryV14OrNewer } from './helpers.js';
 
 export async function updateSize(action, largeStep) {
   let increase = false;
@@ -58,7 +58,7 @@ export async function updateSize(action, largeStep) {
         return true;
       }
     }
-  } else if (activeLayer instanceof foundry.canvas.layers.TemplateLayer) {
+  } else if (!isFoundryV14OrNewer() && (activeLayer instanceof foundry.canvas.layers.TemplateLayer)) {
     const hoveredTemplate = canvas.templates.hover?.document;
     if (hoveredTemplate) {
       const currentDistance = hoveredTemplate.distance;

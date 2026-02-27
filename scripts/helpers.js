@@ -21,3 +21,11 @@ export function runAsync(action) {
 export function getRandomArbitrary(min, max) {
   return Math.random() * (max - min) + min;
 }
+
+export function isFoundryV14OrNewer() {
+  const generation = game.release?.generation;
+  if (Number.isInteger(generation)) return generation >= 14;
+
+  const majorVersion = Number.parseInt(game.version, 10);
+  return Number.isInteger(majorVersion) && majorVersion >= 14;
+}

@@ -1,5 +1,5 @@
 import { QS_MODULE_ID } from './constants.js';
-import { getActiveLayer, isAssistantOrHigher, runAsync } from './helpers.js';
+import { getActiveLayer, isAssistantOrHigher, isFoundryV14OrNewer, runAsync } from './helpers.js';
 import { randomizeRotation, randomizeScale, revertPrototype, updatePrototype, updateSize } from './actions.js';
 
 export async function registerKeyBindings() {
@@ -91,7 +91,7 @@ function onScaleKeybind(action, largeStep) {
     if (!authorized || !canvas.lighting.hover?.document) return false;
   } else if (layer instanceof foundry.canvas.layers.SoundsLayer) {
     if (!authorized || !canvas.sounds.hover?.document) return false;
-  } else if (layer instanceof foundry.canvas.layers.TemplateLayer) {
+  } else if (!isFoundryV14OrNewer() && (layer instanceof foundry.canvas.layers.TemplateLayer)) {
     if (!canvas.templates.hover?.document) return false;
   } else {
     return false;
