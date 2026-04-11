@@ -4,7 +4,7 @@
   "description": "A small module for quickly adjusting the scale of things.",
   "compatibility": {
     "minimum": 13,
-    "verified": 13
+    "verified": 14
   },
   "version": "1.0.0",
   "url": "https://github.com/unsoluble/quickscale",
